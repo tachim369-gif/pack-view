@@ -781,18 +781,49 @@ document.getElementById('allResetBtn').addEventListener('click', ()=>{
 });
 
 /* ---------- NAV ---------- */
+const VIEW_ORDER = ['home', 'cal', 'settings'];
+function switchView(view){
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  if(view === 'cal') renderCalendar();
+  if(view === 'settings') renderSettings();
+  if(view === 'home') renderHome();
+}
 document.querySelectorAll('.navbtn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-    const view = btn.dataset.view;
-    document.getElementById('view-'+view).classList.add('active');
-    if(view === 'cal') renderCalendar();
-    if(view === 'settings') renderSettings();
-    if(view === 'home') renderHome();
+    switchView(btn.dataset.view);
   });
 });
+
+/* ---------- SWIPE BETWEEN VIEWS ---------- */
+(function(){
+  const mainEl = document.querySelector('main');
+  let touchStartX = 0, touchStartY = 0, touchActive = false;
+  mainEl.addEventListener('touchstart', (e)=>{
+    if(e.touches.length !== 1) return;
+    // ignore swipes that start inside a modal
+    if(document.querySelector('.modal-bg.show')) return;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchActive = true;
+  }, { passive: true });
+  mainEl.addEventListener('touchend', (e)=>{
+    if(!touchActive) return;
+    touchActive = false;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const activeView = document.querySelector('.view.active').id.replace('view-', '');
+    const idx = VIEW_ORDER.indexOf(activeView);
+    if(idx === -1) return;
+    if(dx < 0 && idx < VIEW_ORDER.length - 1){
+      switchView(VIEW_ORDER[idx + 1]);
+    } else if(dx > 0 && idx > 0){
+      switchView(VIEW_ORDER[idx - 1]);
+    }
+  }, { passive: true });
+})();
 
 /* ---------- INIT ---------- */
 renderCalendarDow();
