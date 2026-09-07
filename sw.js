@@ -1,4 +1,4 @@
-const CACHE = 'packview-v104';
+const CACHE = 'packview-v105';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.png'];
 
 self.addEventListener('install', (e) => {
