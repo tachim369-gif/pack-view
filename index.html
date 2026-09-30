@@ -985,8 +985,15 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${visibleCount * slotPx}px;overflow-x:scroll;-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
   const scrollDiv = el.querySelector('.chart-scroll');
   if(scrollDiv){
-    const visibleBars = Math.max(1, Math.floor(scrollDiv.clientWidth / slotPx));
-    scrollDiv.scrollLeft = Math.max(0, totalW - visibleBars * slotPx);
+    const applyScroll = () => {
+      const maxScroll = Math.max(0, scrollDiv.scrollWidth - scrollDiv.clientWidth);
+      const visibleBars = Math.max(1, Math.floor(scrollDiv.clientWidth / slotPx));
+      const target = Math.max(0, totalW - visibleBars * slotPx);
+      scrollDiv.scrollLeft = Math.min(target, maxScroll);
+    };
+    applyScroll();
+    requestAnimationFrame(applyScroll);
+    requestAnimationFrame(() => requestAnimationFrame(applyScroll));
   }
 
   el.querySelectorAll('.chart-hit').forEach(rect => {
