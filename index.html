@@ -917,7 +917,10 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   const costRowY = hasCostRow ? nextRowY : null; if(hasCostRow) nextRowY += 10;
   const totalH = nextRowY - 5;
   const n = values.length;
-  const slotPx = 40;
+  const visibleCount = 8;
+  const labelColW = rowLabels ? 44 : 0;
+  const availableWidth = Math.max((el.clientWidth || 302) - labelColW, 100);
+  const slotPx = n <= visibleCount ? Math.max(20, Math.floor(availableWidth / n)) : 40;
   const barW = slotPx - 6;
   const totalW = n * slotPx;
   const getThreshold = i => {
@@ -980,9 +983,9 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     if(rowLabels.overDays && hasOverRow) rowLabelEls += `<text x="0" y="${overRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.overDays}</text>`;
     if(rowLabels.avg && hasAvgRow) rowLabelEls += `<text x="0" y="${avgRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.avg}</text>`;
   }
-  const visibleCount = 8;
+  const maxContainerWidth = n <= visibleCount ? totalW : visibleCount * 40;
   const rowLabelSvg = rowLabels ? `<svg width="44" height="${totalH}" viewBox="0 0 44 ${totalH}" style="display:block;flex:0 0 auto;">${rowLabelEls}</svg>` : '';
-  el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${visibleCount * slotPx}px;overflow-x:scroll;-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
+  el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:scroll;-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
   const scrollDiv = el.querySelector('.chart-scroll');
   if(scrollDiv){
     const applyScroll = () => {
