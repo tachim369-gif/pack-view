@@ -1044,7 +1044,7 @@ function renderWeeklyChart(){
   }
   const minWeeks = 8;
   const weeksSpan = startSunday ? Math.round((thisSunday.getTime() - startSunday.getTime()) / (7 * 86400000)) + 1 : minWeeks;
-  const weekCount = Math.max(minWeeks, weeksSpan);
+  const weekCount = startSunday ? weeksSpan : minWeeks;
   const windowStartSunday = startSunday || new Date(thisSunday.getFullYear(), thisSunday.getMonth(), thisSunday.getDate() - (minWeeks - 1) * 7);
 
   const allWeeks = [];
@@ -1097,7 +1097,7 @@ function renderMonthlyChart(){
   }
   const minMonths = 8;
   const monthsSpan = dataStartAbs !== null ? (currentAbs - dataStartAbs) + 1 : minMonths;
-  const monthCount = Math.max(minMonths, monthsSpan);
+  const monthCount = dataStartAbs !== null ? monthsSpan : minMonths;
   const windowStartAbs = dataStartAbs !== null ? dataStartAbs : currentAbs - (minMonths - 1);
 
   const allMonths = [];
