@@ -1447,6 +1447,7 @@ document.getElementById('backupImportInput').addEventListener('change', (e)=>{
 /* ---------- NAV ---------- */
 const VIEW_ORDER = ['home', 'cal', 'memo', 'stats', 'settings'];
 function switchView(view){
+  document.querySelectorAll('.chart-tooltip').forEach(t => { t.style.display = 'none'; });
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
@@ -1472,6 +1473,8 @@ document.querySelectorAll('.navbtn').forEach(btn=>{
     if(document.querySelector('.modal-bg.show')) return;
     // ignore swipes that start inside a horizontally-scrollable chart
     if(e.target.closest('.chart-scroll')) { touchActive = false; return; }
+    // ignore swipes that start inside the chart detail popup
+    if(e.target.closest('.chart-tooltip')) { touchActive = false; return; }
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchActive = true;
