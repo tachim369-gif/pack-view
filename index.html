@@ -339,7 +339,7 @@
         <div id="statsWeekChart"></div>
       </div>
       <div class="card">
-        <div class="section-title" style="margin:0 0 10px">月別推移(直近12ヶ月)</div>
+        <div class="section-title" style="margin:0 0 10px">月別推移(直近8ヶ月)</div>
         <div id="statsMonthChart"></div>
       </div>
       <div class="card">
@@ -1019,11 +1019,11 @@ function renderMonthlyChart(){
     const [y, m] = recordedKeys[0].split('-').map(Number);
     dataStartAbs = y * 12 + (m - 1);
   }
-  const earliestAllowedAbs = currentAbs - 11;
+  const earliestAllowedAbs = currentAbs - 7;
   const windowStartAbs = (dataStartAbs !== null && dataStartAbs > earliestAllowedAbs) ? dataStartAbs : earliestAllowedAbs;
 
   const allMonths = [];
-  for(let k = 0; k < 12; k++){
+  for(let k = 0; k < 8; k++){
     const abs = windowStartAbs + k;
     const y = Math.floor(abs / 12);
     const m = ((abs % 12) + 12) % 12;
