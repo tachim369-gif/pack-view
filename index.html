@@ -337,6 +337,12 @@
     <!-- STATS -->
     <section class="view" id="view-stats">
       <div class="card">
+        <div class="section-title" style="margin:0 0 10px">サマリー</div>
+        <div class="check-line">記録開始日 <b id="statsStartDate">-</b>　記録日数 <b id="statsRecordDays">0</b>日</div>
+        <div class="check-line">累計本数 <b id="statsTotalCount">0</b>本　平均本数 <b id="statsAvgCount">0</b>本/日</div>
+        <div class="check-line">累計金額 <b id="statsTotalCost">¥0</b>　平均金額 <b id="statsAvgCost">¥0</b>/日</div>
+      </div>
+      <div class="card">
         <div class="section-title" style="margin:0 0 10px">週別推移(直近8週間)</div>
         <div id="statsWeekChart"></div>
       </div>
@@ -1173,6 +1179,7 @@ function formatStreakRange(startKey, endKey){
 }
 
 function renderStatsView(){
+  renderTotalsCard();
   renderWeeklyChart();
   renderMonthlyChart();
   const { longestAchieve, achieveStart, achieveEnd, longestZero, zeroStart, zeroEnd } = computeStreaks();
@@ -1180,6 +1187,26 @@ function renderStatsView(){
   document.getElementById('statsZeroStreak').textContent = longestZero;
   document.getElementById('statsAchieveRange').textContent = formatStreakRange(achieveStart, achieveEnd);
   document.getElementById('statsZeroRange').textContent = formatStreakRange(zeroStart, zeroEnd);
+}
+
+function renderTotalsCard(){
+  const costPerCig = data.pricePerPack > 0 ? data.pricePerPack / data.packSize : 0;
+  const recordedKeys = Object.keys(data.days).filter(k => data.days[k].count !== null && data.days[k].count !== undefined).sort();
+  const totalCount = recordedKeys.reduce((a, k) => a + (data.days[k].count || 0), 0);
+  const totalCost = totalCount * costPerCig;
+  document.getElementById('statsTotalCount').textContent = totalCount.toLocaleString();
+  document.getElementById('statsTotalCost').textContent = `¥${Math.round(totalCost).toLocaleString()}`;
+  document.getElementById('statsRecordDays').textContent = recordedKeys.length.toLocaleString();
+  const avgCount = recordedKeys.length > 0 ? totalCount / recordedKeys.length : 0;
+  const avgCost = recordedKeys.length > 0 ? totalCost / recordedKeys.length : 0;
+  document.getElementById('statsAvgCount').textContent = avgCount.toFixed(1);
+  document.getElementById('statsAvgCost').textContent = `¥${Math.round(avgCost).toLocaleString()}`;
+  if(recordedKeys.length > 0){
+    const [y, m, d] = recordedKeys[0].split('-').map(Number);
+    document.getElementById('statsStartDate').textContent = `${y}/${m}/${d}`;
+  } else {
+    document.getElementById('statsStartDate').textContent = '-';
+  }
 }
 
 let currentModalDayKey = null;
