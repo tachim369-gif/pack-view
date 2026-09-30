@@ -845,7 +845,8 @@ function renderCalendar(){
   let statsHtml = `記録日数 <b>${monthKeys.length}</b>日`;
   if(data.dailyGoal > 0){
     const overCount = monthKeys.filter(k => data.days[k].count > data.dailyGoal).length;
-    statsHtml += `　超過日数 <b style="color:var(--danger)">${overCount}</b>日`;
+    const overColor = overCount > 0 ? 'var(--danger)' : 'var(--text-card)';
+    statsHtml += `　超過日数 <b><span style="color:${overColor}">${overCount}</span>/${monthKeys.length}</b>`;
     const achievedCount = monthKeys.filter(k => data.days[k].count <= data.dailyGoal).length;
     statsHtml += `　達成日数 <b>${achievedCount}/${monthKeys.length}</b>日`;
   }
@@ -900,13 +901,19 @@ function renderTrendChart(year, month, daysInMonth){
   chartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100px;display:block;">${axisLine}${goalLine}${bars}</svg>`;
 }
 
-function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thresholds, goalLineValue, costs, rowLabels){
+function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thresholds, goalLineValue, costs, rowLabels, overDays, avgs){
   const fmtV = valueFormatter || (v => v);
   const W = 320, H = 100, padB = 4, padT = 6;
-  const periodRowY = H + 9;
-  const valueRowY = H + 19;
-  const costRowY = H + 29;
-  const totalH = (costs ? costRowY : valueRowY) + 5;
+  const hasOverRow = !!overDays;
+  const hasAvgRow = !!avgs;
+  const hasCostRow = !!costs;
+  let nextRowY = H + 9;
+  const periodRowY = nextRowY; nextRowY += 10;
+  const overRowY = hasOverRow ? nextRowY : null; if(hasOverRow) nextRowY += 10;
+  const valueRowY = nextRowY; nextRowY += 10;
+  const avgRowY = hasAvgRow ? nextRowY : null; if(hasAvgRow) nextRowY += 10;
+  const costRowY = hasCostRow ? nextRowY : null; if(hasCostRow) nextRowY += 10;
+  const totalH = nextRowY - 5;
   const n = values.length;
   const leftLabelW = rowLabels ? 34 : 0;
   const chartW = W - leftLabelW;
@@ -941,6 +948,14 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     }
     const valueColor = (t > 0 && v > t) ? 'var(--danger)' : 'var(--text-card)';
     valueEls += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="8" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
+    if(overDays && overDays[i] !== undefined && overDays[i] !== null){
+      const overParts = String(overDays[i]).split('/');
+      const overNumColor = overParts[0] !== '0' ? 'var(--danger)' : 'var(--text-card)';
+      valueEls += `<text x="${cx.toFixed(1)}" y="${overRowY}" font-size="8" font-weight="600" text-anchor="middle"><tspan fill="${overNumColor}">${overParts[0]}</tspan><tspan fill="var(--text-card)">/${overParts[1]}</tspan></text>`;
+    }
+    if(avgs && avgs[i] !== undefined && avgs[i] !== null){
+      valueEls += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="middle">${avgs[i]}</text>`;
+    }
     if(costs && costs[i] !== undefined){
       valueEls += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
     }
@@ -959,6 +974,8 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     if(rowLabels.value) rowLabelEls += `<text x="0" y="${valueRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.value}</text>`;
     if(rowLabels.cost && costs) rowLabelEls += `<text x="0" y="${costRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.cost}</text>`;
     if(rowLabels.period) rowLabelEls += `<text x="0" y="${periodRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.period}</text>`;
+    if(rowLabels.overDays && hasOverRow) rowLabelEls += `<text x="0" y="${overRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.overDays}</text>`;
+    if(rowLabels.avg && hasAvgRow) rowLabelEls += `<text x="0" y="${avgRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.avg}</text>`;
   }
   el.innerHTML = `<svg viewBox="0 0 ${W} ${totalH}" preserveAspectRatio="none" style="width:100%;height:${totalH}px;display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${rowLabelEls}</svg>`;
 }
@@ -983,27 +1000,35 @@ function renderWeeklyChart(){
   for(let i = 0; i < 8; i++){
     const start = new Date(windowStartSunday.getFullYear(), windowStartSunday.getMonth(), windowStartSunday.getDate() + i * 7);
     const isFuture = start.getTime() > thisSunday.getTime();
-    let total = 0, recorded = 0;
+    let total = 0, recorded = 0, over = 0;
     if(!isFuture){
       for(let d = 0; d < 7; d++){
         const dt = new Date(start.getFullYear(), start.getMonth(), start.getDate() + d);
         const key = dateKey(dt);
         const rec = data.days[key];
-        if(rec && rec.count !== null && rec.count !== undefined){ total += rec.count; recorded++; }
+        if(rec && rec.count !== null && rec.count !== undefined){
+          total += rec.count;
+          recorded++;
+          if(goal > 0 && rec.count > goal) over++;
+        }
       }
     }
     const hasData = recorded > 0;
     allWeeks.push({
       label: `${start.getMonth()+1}/${start.getDate()}-`,
       value: hasData ? total : null,
-      cost: hasData ? total * costPerCig : null
+      cost: hasData ? total * costPerCig : null,
+      overDays: hasData && goal > 0 ? `${over}/${recorded}` : null,
+      avg: hasData ? (total / recorded).toFixed(1) : null
     });
   }
   const weeks = allWeeks.map(w => w.value);
   const weekLabels = allWeeks.map(w => w.label);
   const weekCosts = allWeeks.map(w => w.cost);
+  const weekOverDays = allWeeks.map(w => w.overDays);
+  const weekAvgs = allWeeks.map(w => w.avg);
   const weekThreshold = goal > 0 ? goal * 7 : 0;
-  drawSimpleBarChart(el, weeks, weekLabels, undefined, undefined, weekThreshold, weekThreshold, costPerCig > 0 ? weekCosts : undefined, { value: '週間合計', cost: '週間支出', period: '期間' });
+  drawSimpleBarChart(el, weeks, weekLabels, undefined, undefined, weekThreshold, weekThreshold, costPerCig > 0 ? weekCosts : undefined, { value: '週間合計', cost: '週間支出', period: '期間', overDays: '超過日数', avg: '週間平均' }, goal > 0 ? weekOverDays : undefined, weekAvgs);
 }
 
 function renderMonthlyChart(){
@@ -1031,24 +1056,30 @@ function renderMonthlyChart(){
     const prefix = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
     const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
     const isFuture = abs > currentAbs;
-    let hasData = false, total = 0;
+    let hasData = false, total = 0, over = 0, recorded = 0;
     if(!isFuture){
       const keys = Object.keys(data.days).filter(k2 => k2.startsWith(prefix) && data.days[k2].count !== null && data.days[k2].count !== undefined);
       hasData = keys.length > 0;
+      recorded = keys.length;
       total = keys.reduce((a,k2) => a + (data.days[k2].count || 0), 0);
+      if(goal > 0) over = keys.filter(k2 => data.days[k2].count > goal).length;
     }
     allMonths.push({
       label: `${d.getMonth()+1}月`,
       value: hasData ? total : null,
       threshold: goal > 0 ? goal * daysInMonth : 0,
-      cost: hasData ? total * costPerCig : null
+      cost: hasData ? total * costPerCig : null,
+      overDays: hasData && goal > 0 ? `${over}/${recorded}` : null,
+      avg: hasData ? (total / recorded).toFixed(1) : null
     });
   }
   const months = allMonths.map(m => m.value);
   const monthLabels = allMonths.map(m => m.label);
   const monthThresholds = allMonths.map(m => m.threshold);
   const monthCosts = allMonths.map(m => m.cost);
-  drawSimpleBarChart(el, months, monthLabels, undefined, undefined, monthThresholds, undefined, costPerCig > 0 ? monthCosts : undefined, { value: '月間合計', cost: '月間支出', period: '期間' });
+  const monthOverDays = allMonths.map(m => m.overDays);
+  const monthAvgs = allMonths.map(m => m.avg);
+  drawSimpleBarChart(el, months, monthLabels, undefined, undefined, monthThresholds, undefined, costPerCig > 0 ? monthCosts : undefined, { value: '月間合計', cost: '月間支出', period: '期間', overDays: '超過日数', avg: '月間平均' }, goal > 0 ? monthOverDays : undefined, monthAvgs);
 }
 
 function computeStreaks(){
