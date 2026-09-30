@@ -332,6 +332,23 @@
       <div id="memoList"></div>
     </section>
 
+    <!-- STATS -->
+    <section class="view" id="view-stats">
+      <div class="card">
+        <div class="section-title" style="margin:0 0 10px">週別推移(直近8週間)</div>
+        <div id="statsWeekChart"></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin:0 0 10px">月別推移(直近12ヶ月)</div>
+        <div id="statsMonthChart"></div>
+      </div>
+      <div class="card">
+        <div class="section-title" style="margin:0 0 10px">連続記録</div>
+        <div class="check-line">目標本数以下の連続日数 <b id="statsAchieveStreak">0</b>日 <span id="statsAchieveRange"></span></div>
+        <div class="check-line">0本の連続日数 <b id="statsZeroStreak">0</b>日 <span id="statsZeroRange"></span></div>
+      </div>
+    </section>
+
     <!-- SETTINGS -->
     <section class="view" id="view-settings">
       <div class="card">
@@ -404,6 +421,7 @@
       <button class="navbtn active" data-view="home"><span class="ic">●</span>ホーム</button>
       <button class="navbtn" data-view="cal"><span class="ic">▦</span>カレンダー</button>
       <button class="navbtn" data-view="memo"><span class="ic">✎</span>メモ</button>
+      <button class="navbtn" data-view="stats"><span class="ic">Σ</span>統計</button>
       <button class="navbtn" data-view="settings"><span class="ic">⚙</span>設定</button>
     </div>
   </nav>
@@ -854,23 +872,227 @@ function renderTrendChart(year, month, daysInMonth){
   const maxCount = Math.max(1, data.dailyGoal, ...counts.map(c => c || 0));
   const W = 320, H = 100, padB = 4, padT = 6;
   const slot = W / daysInMonth;
-  const barW = Math.max(slot - 2, 1);
+  const barW = Math.max(slot - 1, 1);
   let bars = '';
   counts.forEach((c, i) => {
     if(c === null) return;
-    const x = i * slot + (slot - barW) / 2;
+    const x = i * slot;
     const h = c > 0 ? Math.max((c / maxCount) * (H - padT - padB), 2) : 2;
     const y = H - padB - h;
-    const over = data.dailyGoal > 0 && c > data.dailyGoal;
-    bars += `<rect class="chart-bar${over ? ' over' : ''}" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
+    const goal = data.dailyGoal;
+    if(goal > 0 && c > goal){
+      const hBase = Math.max((goal / maxCount) * (H - padT - padB), 0);
+      const yBase = H - padB - hBase;
+      const hOver = Math.max(h - hBase, 1);
+      const yOver = yBase - hOver;
+      bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${yBase.toFixed(1)}" width="${barW.toFixed(1)}" height="${hBase.toFixed(1)}" rx="1.5"></rect>`;
+      bars += `<rect class="chart-bar over" x="${x.toFixed(1)}" y="${yOver.toFixed(1)}" width="${barW.toFixed(1)}" height="${hOver.toFixed(1)}" rx="1.5"></rect>`;
+    } else {
+      bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
+    }
   });
   let goalLine = '';
   if(data.dailyGoal > 0){
     const gy = H - padB - (data.dailyGoal / maxCount) * (H - padT - padB);
-    goalLine = `<line x1="0" y1="${gy.toFixed(1)}" x2="${W}" y2="${gy.toFixed(1)}" stroke="var(--sub)" stroke-width="1" stroke-dasharray="3,3"></line>`;
+    goalLine = `<line x1="0" y1="${gy.toFixed(1)}" x2="${W}" y2="${gy.toFixed(1)}" stroke="var(--danger)" stroke-width="1"></line>`;
   }
-  const axisLine = `<line x1="0" y1="${H-padB}" x2="${W}" y2="${H-padB}" stroke="var(--border)" stroke-width="1"></line>`;
+  const axisLine = `<line x1="0" y1="${H-padB}" x2="${W}" y2="${H-padB}" stroke="var(--accent)" stroke-width="1"></line>`;
   chartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100px;display:block;">${axisLine}${goalLine}${bars}</svg>`;
+}
+
+function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thresholds, goalLineValue, costs, rowLabels){
+  const fmtV = valueFormatter || (v => v);
+  const W = 320, H = 100, padB = 4, padT = 6;
+  const periodRowY = H + 9;
+  const valueRowY = H + 19;
+  const costRowY = H + 29;
+  const totalH = (costs ? costRowY : valueRowY) + 5;
+  const n = values.length;
+  const leftLabelW = rowLabels ? 34 : 0;
+  const chartW = W - leftLabelW;
+  const getThreshold = i => {
+    if(thresholds === undefined || thresholds === null) return 0;
+    return Array.isArray(thresholds) ? (thresholds[i] || 0) : thresholds;
+  };
+  const maxV = maxOverride || Math.max(1, ...values, goalLineValue || 0);
+  const slot = chartW / n;
+  const barW = Math.max(slot - 2, 1);
+  let bars = '';
+  let labelEls = '';
+  let valueEls = '';
+  values.forEach((v, i) => {
+    const x = leftLabelW + i * slot;
+    const cx = x + barW / 2;
+    if(v === null || v === undefined){
+      return;
+    }
+    const h = v > 0 ? Math.max((v / maxV) * (H - padT - padB), 2) : 2;
+    const y = H - padB - h;
+    const t = getThreshold(i);
+    if(t > 0 && v > t){
+      const hBase = Math.max((t / maxV) * (H - padT - padB), 0);
+      const yBase = H - padB - hBase;
+      const hOver = Math.max(h - hBase, 1);
+      const yOver = yBase - hOver;
+      bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${yBase.toFixed(1)}" width="${barW.toFixed(1)}" height="${hBase.toFixed(1)}" rx="1.5"></rect>`;
+      bars += `<rect class="chart-bar over" x="${x.toFixed(1)}" y="${yOver.toFixed(1)}" width="${barW.toFixed(1)}" height="${hOver.toFixed(1)}" rx="1.5"></rect>`;
+    } else {
+      bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
+    }
+    const valueColor = (t > 0 && v > t) ? 'var(--danger)' : 'var(--text-card)';
+    valueEls += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="8" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
+    if(costs && costs[i] !== undefined){
+      valueEls += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
+    }
+    if(labels && labels[i] !== undefined){
+      labelEls += `<text x="${cx.toFixed(1)}" y="${periodRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="middle">${labels[i]}</text>`;
+    }
+  });
+  const axisLine = `<line x1="${leftLabelW}" y1="${H-padB}" x2="${W}" y2="${H-padB}" stroke="var(--accent)" stroke-width="1"></line>`;
+  let goalLine = '';
+  if(goalLineValue){
+    const gy = H - padB - (goalLineValue / maxV) * (H - padT - padB);
+    goalLine = `<line x1="${leftLabelW}" y1="${gy.toFixed(1)}" x2="${W}" y2="${gy.toFixed(1)}" stroke="var(--danger)" stroke-width="1"></line>`;
+  }
+  let rowLabelEls = '';
+  if(rowLabels){
+    if(rowLabels.value) rowLabelEls += `<text x="0" y="${valueRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.value}</text>`;
+    if(rowLabels.cost && costs) rowLabelEls += `<text x="0" y="${costRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.cost}</text>`;
+    if(rowLabels.period) rowLabelEls += `<text x="0" y="${periodRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.period}</text>`;
+  }
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${totalH}" preserveAspectRatio="none" style="width:100%;height:${totalH}px;display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${rowLabelEls}</svg>`;
+}
+
+function renderWeeklyChart(){
+  const el = document.getElementById('statsWeekChart');
+  const today = effectiveNow();
+  const thisSunday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
+  const goal = data.dailyGoal;
+  const costPerCig = data.pricePerPack > 0 ? data.pricePerPack / data.packSize : 0;
+
+  const recordedKeys = Object.keys(data.days).filter(k => data.days[k].count !== null && data.days[k].count !== undefined).sort();
+  let startSunday = null;
+  if(recordedKeys.length > 0){
+    const firstDate = new Date(recordedKeys[0] + 'T00:00:00');
+    startSunday = new Date(firstDate.getFullYear(), firstDate.getMonth(), firstDate.getDate() - firstDate.getDay());
+  }
+  const earliestAllowedSunday = new Date(thisSunday.getFullYear(), thisSunday.getMonth(), thisSunday.getDate() - 7 * 7);
+  const windowStartSunday = (startSunday && startSunday.getTime() > earliestAllowedSunday.getTime()) ? startSunday : earliestAllowedSunday;
+
+  const allWeeks = [];
+  for(let i = 0; i < 8; i++){
+    const start = new Date(windowStartSunday.getFullYear(), windowStartSunday.getMonth(), windowStartSunday.getDate() + i * 7);
+    const isFuture = start.getTime() > thisSunday.getTime();
+    let total = 0, recorded = 0;
+    if(!isFuture){
+      for(let d = 0; d < 7; d++){
+        const dt = new Date(start.getFullYear(), start.getMonth(), start.getDate() + d);
+        const key = dateKey(dt);
+        const rec = data.days[key];
+        if(rec && rec.count !== null && rec.count !== undefined){ total += rec.count; recorded++; }
+      }
+    }
+    const hasData = recorded > 0;
+    allWeeks.push({
+      label: `${start.getMonth()+1}/${start.getDate()}-`,
+      value: hasData ? total : null,
+      cost: hasData ? total * costPerCig : null
+    });
+  }
+  const weeks = allWeeks.map(w => w.value);
+  const weekLabels = allWeeks.map(w => w.label);
+  const weekCosts = allWeeks.map(w => w.cost);
+  const weekThreshold = goal > 0 ? goal * 7 : 0;
+  drawSimpleBarChart(el, weeks, weekLabels, undefined, undefined, weekThreshold, weekThreshold, costPerCig > 0 ? weekCosts : undefined, { value: '週間合計', cost: '週間支出', period: '期間' });
+}
+
+function renderMonthlyChart(){
+  const el = document.getElementById('statsMonthChart');
+  const today = effectiveNow();
+  const goal = data.dailyGoal;
+  const costPerCig = data.pricePerPack > 0 ? data.pricePerPack / data.packSize : 0;
+
+  const recordedKeys = Object.keys(data.days).filter(k => data.days[k].count !== null && data.days[k].count !== undefined).sort();
+  const currentAbs = today.getFullYear() * 12 + today.getMonth();
+  let dataStartAbs = null;
+  if(recordedKeys.length > 0){
+    const [y, m] = recordedKeys[0].split('-').map(Number);
+    dataStartAbs = y * 12 + (m - 1);
+  }
+  const earliestAllowedAbs = currentAbs - 11;
+  const windowStartAbs = (dataStartAbs !== null && dataStartAbs > earliestAllowedAbs) ? dataStartAbs : earliestAllowedAbs;
+
+  const allMonths = [];
+  for(let k = 0; k < 12; k++){
+    const abs = windowStartAbs + k;
+    const y = Math.floor(abs / 12);
+    const m = ((abs % 12) + 12) % 12;
+    const d = new Date(y, m, 1);
+    const prefix = `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+    const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    const isFuture = abs > currentAbs;
+    let hasData = false, total = 0;
+    if(!isFuture){
+      const keys = Object.keys(data.days).filter(k2 => k2.startsWith(prefix) && data.days[k2].count !== null && data.days[k2].count !== undefined);
+      hasData = keys.length > 0;
+      total = keys.reduce((a,k2) => a + (data.days[k2].count || 0), 0);
+    }
+    allMonths.push({
+      label: `${d.getMonth()+1}月`,
+      value: hasData ? total : null,
+      threshold: goal > 0 ? goal * daysInMonth : 0,
+      cost: hasData ? total * costPerCig : null
+    });
+  }
+  const months = allMonths.map(m => m.value);
+  const monthLabels = allMonths.map(m => m.label);
+  const monthThresholds = allMonths.map(m => m.threshold);
+  const monthCosts = allMonths.map(m => m.cost);
+  drawSimpleBarChart(el, months, monthLabels, undefined, undefined, monthThresholds, undefined, costPerCig > 0 ? monthCosts : undefined, { value: '月間合計', cost: '月間支出', period: '期間' });
+}
+
+function computeStreaks(){
+  const goal = data.dailyGoal;
+  const keys = Object.keys(data.days)
+    .filter(k => data.days[k].count !== null && data.days[k].count !== undefined)
+    .sort();
+  let longestAchieve = 0, curAchieve = 0, achieveStart = null, achieveEnd = null, curAchieveStart = null;
+  let longestZero = 0, curZero = 0, zeroStart = null, zeroEnd = null, curZeroStart = null;
+  let prevDate = null;
+  keys.forEach(k => {
+    const rec = data.days[k];
+    const d = new Date(k + 'T00:00:00');
+    const isConsecutive = prevDate && (d - prevDate === 86400000);
+    if(!isConsecutive){ curAchieve = 0; curZero = 0; curAchieveStart = null; curZeroStart = null; }
+    if(goal > 0 && rec.count <= goal){
+      curAchieve++;
+      if(curAchieve === 1) curAchieveStart = k;
+      if(curAchieve >= longestAchieve){ longestAchieve = curAchieve; achieveStart = curAchieveStart; achieveEnd = k; }
+    } else { curAchieve = 0; curAchieveStart = null; }
+    if(rec.count === 0){
+      curZero++;
+      if(curZero === 1) curZeroStart = k;
+      if(curZero >= longestZero){ longestZero = curZero; zeroStart = curZeroStart; zeroEnd = k; }
+    } else { curZero = 0; curZeroStart = null; }
+    prevDate = d;
+  });
+  return { longestAchieve, achieveStart, achieveEnd, longestZero, zeroStart, zeroEnd };
+}
+
+function formatStreakRange(startKey, endKey){
+  if(!startKey || !endKey) return '';
+  const fmt = k => { const [y,m,d] = k.split('-'); return `${Number(m)}/${Number(d)}`; };
+  return startKey === endKey ? `(${fmt(startKey)})` : `(${fmt(startKey)}〜${fmt(endKey)})`;
+}
+
+function renderStatsView(){
+  renderWeeklyChart();
+  renderMonthlyChart();
+  const { longestAchieve, achieveStart, achieveEnd, longestZero, zeroStart, zeroEnd } = computeStreaks();
+  document.getElementById('statsAchieveStreak').textContent = longestAchieve;
+  document.getElementById('statsZeroStreak').textContent = longestZero;
+  document.getElementById('statsAchieveRange').textContent = formatStreakRange(achieveStart, achieveEnd);
+  document.getElementById('statsZeroRange').textContent = formatStreakRange(zeroStart, zeroEnd);
 }
 
 let currentModalDayKey = null;
@@ -1136,13 +1358,14 @@ document.getElementById('backupImportInput').addEventListener('change', (e)=>{
 });
 
 /* ---------- NAV ---------- */
-const VIEW_ORDER = ['home', 'cal', 'memo', 'settings'];
+const VIEW_ORDER = ['home', 'cal', 'memo', 'stats', 'settings'];
 function switchView(view){
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
   if(view === 'cal') renderCalendar();
   if(view === 'memo') renderMemoView();
+  if(view === 'stats') renderStatsView();
   if(view === 'settings') renderSettings();
   if(view === 'home') renderHome();
 }
