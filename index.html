@@ -222,6 +222,7 @@
   .chart-bar.over{fill:var(--danger);}
   .chart-tooltip{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--card2);color:var(--text-card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:14px;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,0.4);z-index:5;white-space:nowrap;}
   .chart-tooltip-close{position:absolute;top:2px;right:6px;font-size:16px;line-height:1;color:var(--sub);cursor:pointer;padding:4px;}
+  .chart-tooltip-calbtn{display:block;width:100%;margin-top:8px;padding:8px 0;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text-card);font-size:12px;font-weight:700;white-space:nowrap;}
   .theme-swatches{display:flex;gap:14px;}
   .theme-swatches .swatch{
     width:40px;height:40px;border-radius:50%;border:2px solid transparent;
@@ -909,7 +910,7 @@ function renderTrendChart(year, month, daysInMonth){
   chartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100px;display:block;">${axisLine}${goalLine}${bars}</svg>`;
 }
 
-function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thresholds, goalLineValue, costs, rowLabels, overDays, avgs){
+function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thresholds, goalLineValue, costs, rowLabels, overDays, avgs, monthTargets){
   const fmtV = valueFormatter || (v => v);
   const H = 100, padB = 4, padT = 6;
   const hasOverRow = !!overDays;
@@ -1019,7 +1020,11 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
       parts.push(`<div>${(rowLabels && rowLabels.value) || '合計'}: <span style="color:${vColor}">${fmtV(values[i])}</span></div>`);
       if(rowLabels && rowLabels.avg && avgs && avgs[i] !== undefined && avgs[i] !== null) parts.push(`<div>${rowLabels.avg}: ${avgs[i]}</div>`);
       if(rowLabels && rowLabels.cost && costs && costs[i] !== undefined) parts.push(`<div>${rowLabels.cost}: ¥${Math.round(costs[i]).toLocaleString()}</div>`);
-      showChartTooltip(el, parts.join(''));
+      let calBtnHtml = '';
+      if(monthTargets && monthTargets[i]){
+        calBtnHtml = `<button class="chart-tooltip-calbtn" data-y="${monthTargets[i].y}" data-m="${monthTargets[i].m}">カレンダー</button>`;
+      }
+      showChartTooltip(el, parts.join('') + calBtnHtml);
     });
   });
 }
@@ -1035,6 +1040,16 @@ function showChartTooltip(el, html){
   }
   tip.innerHTML = `<div class="chart-tooltip-close">×</div>${html}`;
   tip.querySelector('.chart-tooltip-close').addEventListener('click', () => { tip.style.display = 'none'; });
+  const calBtn = tip.querySelector('.chart-tooltip-calbtn');
+  if(calBtn){
+    calBtn.addEventListener('click', () => {
+      const y = parseInt(calBtn.dataset.y, 10);
+      const m = parseInt(calBtn.dataset.m, 10);
+      tip.style.display = 'none';
+      calDate = new Date(y, m, 1);
+      switchView('cal');
+    });
+  }
   tip.style.display = 'block';
 }
 
@@ -1079,7 +1094,8 @@ function renderWeeklyChart(){
       value: hasData ? total : null,
       cost: hasData ? total * costPerCig : null,
       overDays: hasData && goal > 0 ? `${over}/${recorded}` : null,
-      avg: hasData ? (total / recorded).toFixed(1) : null
+      avg: hasData ? (total / recorded).toFixed(1) : null,
+      monthTarget: { y: start.getFullYear(), m: start.getMonth() }
     });
   }
   const weeks = allWeeks.map(w => w.value);
@@ -1087,8 +1103,9 @@ function renderWeeklyChart(){
   const weekCosts = allWeeks.map(w => w.cost);
   const weekOverDays = allWeeks.map(w => w.overDays);
   const weekAvgs = allWeeks.map(w => w.avg);
+  const weekMonthTargets = allWeeks.map(w => w.monthTarget);
   const weekThreshold = goal > 0 ? goal * 7 : 0;
-  drawSimpleBarChart(el, weeks, weekLabels, undefined, undefined, weekThreshold, weekThreshold, costPerCig > 0 ? weekCosts : undefined, { value: '週間合計', cost: '週間支出', period: '期間', overDays: '超過日数', avg: '週間平均' }, goal > 0 ? weekOverDays : undefined, weekAvgs);
+  drawSimpleBarChart(el, weeks, weekLabels, undefined, undefined, weekThreshold, weekThreshold, costPerCig > 0 ? weekCosts : undefined, { value: '週間合計', cost: '週間支出', period: '期間', overDays: '超過日数', avg: '週間平均' }, goal > 0 ? weekOverDays : undefined, weekAvgs, weekMonthTargets);
 }
 
 function renderMonthlyChart(){
@@ -1132,7 +1149,8 @@ function renderMonthlyChart(){
       threshold: goal > 0 ? goal * daysInMonth : 0,
       cost: hasData ? total * costPerCig : null,
       overDays: hasData && goal > 0 ? `${over}/${recorded}` : null,
-      avg: hasData ? (total / recorded).toFixed(1) : null
+      avg: hasData ? (total / recorded).toFixed(1) : null,
+      monthTarget: { y: d.getFullYear(), m: d.getMonth() }
     });
   }
   const months = allMonths.map(m => m.value);
@@ -1141,7 +1159,8 @@ function renderMonthlyChart(){
   const monthCosts = allMonths.map(m => m.cost);
   const monthOverDays = allMonths.map(m => m.overDays);
   const monthAvgs = allMonths.map(m => m.avg);
-  drawSimpleBarChart(el, months, monthLabels, undefined, undefined, monthThresholds, undefined, costPerCig > 0 ? monthCosts : undefined, { value: '月間合計', cost: '月間支出', period: '期間', overDays: '超過日数', avg: '月間平均' }, goal > 0 ? monthOverDays : undefined, monthAvgs);
+  const monthTargets = allMonths.map(m => m.monthTarget);
+  drawSimpleBarChart(el, months, monthLabels, undefined, undefined, monthThresholds, undefined, costPerCig > 0 ? monthCosts : undefined, { value: '月間合計', cost: '月間支出', period: '期間', overDays: '超過日数', avg: '月間平均' }, goal > 0 ? monthOverDays : undefined, monthAvgs, monthTargets);
 }
 
 function computeStreaks(){
