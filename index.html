@@ -354,6 +354,7 @@
       <div class="card">
         <div class="section-title" style="margin:0 0 10px">連続記録</div>
         <div class="check-line">目標本数以下の連続日数 <b id="statsAchieveStreak">0</b>日 <span id="statsAchieveRange"></span></div>
+        <div class="check-line">目標本数超過の連続日数 <b id="statsOverStreak" style="color:var(--danger)">0</b>日 <span id="statsOverRange"></span></div>
         <div class="check-line">0本の連続日数 <b id="statsZeroStreak">0</b>日 <span id="statsZeroRange"></span></div>
       </div>
     </section>
@@ -1169,18 +1170,24 @@ function computeStreaks(){
     .filter(k => data.days[k].count !== null && data.days[k].count !== undefined)
     .sort();
   let longestAchieve = 0, curAchieve = 0, achieveStart = null, achieveEnd = null, curAchieveStart = null;
+  let longestOver = 0, curOver = 0, overStart = null, overEnd = null, curOverStart = null;
   let longestZero = 0, curZero = 0, zeroStart = null, zeroEnd = null, curZeroStart = null;
   let prevDate = null;
   keys.forEach(k => {
     const rec = data.days[k];
     const d = new Date(k + 'T00:00:00');
     const isConsecutive = prevDate && (d - prevDate === 86400000);
-    if(!isConsecutive){ curAchieve = 0; curZero = 0; curAchieveStart = null; curZeroStart = null; }
+    if(!isConsecutive){ curAchieve = 0; curOver = 0; curZero = 0; curAchieveStart = null; curOverStart = null; curZeroStart = null; }
     if(goal > 0 && rec.count <= goal){
       curAchieve++;
       if(curAchieve === 1) curAchieveStart = k;
       if(curAchieve >= longestAchieve){ longestAchieve = curAchieve; achieveStart = curAchieveStart; achieveEnd = k; }
     } else { curAchieve = 0; curAchieveStart = null; }
+    if(goal > 0 && rec.count > goal){
+      curOver++;
+      if(curOver === 1) curOverStart = k;
+      if(curOver >= longestOver){ longestOver = curOver; overStart = curOverStart; overEnd = k; }
+    } else { curOver = 0; curOverStart = null; }
     if(rec.count === 0){
       curZero++;
       if(curZero === 1) curZeroStart = k;
@@ -1188,7 +1195,7 @@ function computeStreaks(){
     } else { curZero = 0; curZeroStart = null; }
     prevDate = d;
   });
-  return { longestAchieve, achieveStart, achieveEnd, longestZero, zeroStart, zeroEnd };
+  return { longestAchieve, achieveStart, achieveEnd, longestOver, overStart, overEnd, longestZero, zeroStart, zeroEnd };
 }
 
 function formatStreakRange(startKey, endKey){
@@ -1201,10 +1208,12 @@ function renderStatsView(){
   renderTotalsCard();
   renderWeeklyChart();
   renderMonthlyChart();
-  const { longestAchieve, achieveStart, achieveEnd, longestZero, zeroStart, zeroEnd } = computeStreaks();
+  const { longestAchieve, achieveStart, achieveEnd, longestOver, overStart, overEnd, longestZero, zeroStart, zeroEnd } = computeStreaks();
   document.getElementById('statsAchieveStreak').textContent = longestAchieve;
+  document.getElementById('statsOverStreak').textContent = longestOver;
   document.getElementById('statsZeroStreak').textContent = longestZero;
   document.getElementById('statsAchieveRange').textContent = formatStreakRange(achieveStart, achieveEnd);
+  document.getElementById('statsOverRange').textContent = formatStreakRange(overStart, overEnd);
   document.getElementById('statsZeroRange').textContent = formatStreakRange(zeroStart, zeroEnd);
 }
 
