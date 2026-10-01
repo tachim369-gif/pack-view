@@ -337,6 +337,12 @@
 
     <!-- STATS -->
     <section class="view" id="view-stats">
+      <div class="card" id="statsLocked" style="display:none;">
+        <div class="section-title" style="margin:0 0 10px">統計タブはプレミアム機能です</div>
+        <div class="check-line">設定画面でライセンスキーを認証すると使えるようになります。</div>
+        <button id="statsLockedSettingsBtn" style="margin-top:12px;width:100%;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">設定を開く</button>
+      </div>
+      <div id="statsContent">
       <div class="card">
         <div class="section-title" style="margin:0 0 10px">サマリー</div>
         <div class="check-line">記録開始日 <b id="statsStartDate">-</b>　記録日数 <b id="statsRecordDays">0</b>日</div>
@@ -356,6 +362,7 @@
         <div class="check-line">目標本数以下の連続日数 <b id="statsAchieveStreak">0</b>日 <span id="statsAchieveRange"></span></div>
         <div class="check-line">目標本数超過の連続日数 <b id="statsOverStreak" style="color:var(--danger)">0</b>日 <span id="statsOverRange"></span></div>
         <div class="check-line">0本の連続日数 <b id="statsZeroStreak">0</b>日 <span id="statsZeroRange"></span></div>
+      </div>
       </div>
     </section>
 
@@ -402,7 +409,21 @@
         <div class="check-line">カレンダーの月間支出の基礎数値になります。</div>
       </div>
       <div class="card">
+        <div class="section-title" style="margin:0 0 10px">プレミアム機能</div>
+        <div id="premiumActive" style="display:none;" class="check-line">✓ プレミアム機能が有効です(テーマ・統計タブが使えます)</div>
+        <div id="premiumLocked">
+          <div class="check-line">ライセンスキーを入力すると、カラーテーマと統計タブが使えるようになります。</div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <input type="text" id="licenseKeyInput" placeholder="ライセンスキー" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-card);font-size:13px;">
+            <button id="licenseVerifyBtn" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-card);font-size:13px;font-weight:800;white-space:nowrap;">認証する</button>
+          </div>
+          <div id="licenseStatus" class="check-line" style="margin-top:8px;"></div>
+          <div class="check-line" style="margin-top:8px;"><a href="https://tsearcher2.gumroad.com/l/hgvcdh" target="_blank" rel="noopener" style="color:var(--accent);">まだ購入していない場合はこちら</a></div>
+        </div>
+      </div>
+      <div class="card">
         <div class="section-title" style="margin:0 0 10px">テーマ</div>
+        <div id="themeLocked" class="check-line" style="display:none;">プレミアム機能を解放すると選べるようになります。</div>
         <div class="theme-swatches" id="themeSwatches"></div>
       </div>
       <div class="card">
@@ -511,10 +532,12 @@ function loadData(){
       if(typeof d.pricePerPack !== 'number') d.pricePerPack = 0;
       if(typeof d.packSize !== 'number' || d.packSize < 1) d.packSize = 20;
       if(typeof d.theme !== 'string') d.theme = 'dark';
+      if(typeof d.premium !== 'boolean') d.premium = false;
+      if(typeof d.licenseKey !== 'string') d.licenseKey = '';
       return d;
     }
   }catch(e){}
-  return { packSize: 20, days: {}, activePackSize: null, activePackTaps: 0, dailyGoal: 20, dayStartHour: 0, pricePerPack: 0, theme: 'dark' };
+  return { packSize: 20, days: {}, activePackSize: null, activePackTaps: 0, dailyGoal: 20, dayStartHour: 0, pricePerPack: 0, theme: 'dark', premium: false, licenseKey: '' };
 }
 function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
@@ -1205,6 +1228,10 @@ function formatStreakRange(startKey, endKey){
 }
 
 function renderStatsView(){
+  const locked = !data.premium;
+  document.getElementById('statsLocked').style.display = locked ? '' : 'none';
+  document.getElementById('statsContent').style.display = locked ? 'none' : '';
+  if(locked) return;
   renderTotalsCard();
   renderWeeklyChart();
   renderMonthlyChart();
@@ -1358,22 +1385,70 @@ function renderSettings(){
   document.getElementById('dayStartSetting').textContent = `${data.dayStartHour}:00`;
   document.getElementById('pricePerPackInput').value = data.pricePerPack > 0 ? data.pricePerPack : '';
 
+  document.getElementById('premiumActive').style.display = data.premium ? '' : 'none';
+  document.getElementById('premiumLocked').style.display = data.premium ? 'none' : '';
+
   const swatchWrap = document.getElementById('themeSwatches');
+  document.getElementById('themeLocked').style.display = data.premium ? 'none' : '';
+  swatchWrap.style.display = data.premium ? '' : 'none';
   swatchWrap.innerHTML = '';
-  Object.keys(THEMES).forEach(name=>{
-    const t = THEMES[name];
-    const sw = document.createElement('div');
-    sw.className = 'swatch' + (data.theme === name ? ' active' : '');
-    sw.style.background = t.bg;
-    sw.addEventListener('click', ()=>{
-      data.theme = name;
-      saveData();
-      applyTheme(name);
-      renderSettings();
+  if(data.premium){
+    Object.keys(THEMES).forEach(name=>{
+      const t = THEMES[name];
+      const sw = document.createElement('div');
+      sw.className = 'swatch' + (data.theme === name ? ' active' : '');
+      sw.style.background = t.bg;
+      sw.addEventListener('click', ()=>{
+        data.theme = name;
+        saveData();
+        applyTheme(name);
+        renderSettings();
+      });
+      swatchWrap.appendChild(sw);
     });
-    swatchWrap.appendChild(sw);
-  });
+  }
 }
+
+const LICENSE_WORKER_URL = 'https://bitter-fog-4588.tsearch-office.workers.dev/';
+async function verifyLicenseKey(key){
+  try{
+    const res = await fetch(LICENSE_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ license_key: key })
+    });
+    return await res.json();
+  }catch(e){
+    return { success: false, message: '通信エラーが発生しました。通信環境を確認してください。' };
+  }
+}
+document.getElementById('statsLockedSettingsBtn').addEventListener('click', ()=>{
+  switchView('settings');
+});
+document.getElementById('licenseVerifyBtn').addEventListener('click', async ()=>{
+  const input = document.getElementById('licenseKeyInput');
+  const statusEl = document.getElementById('licenseStatus');
+  const btn = document.getElementById('licenseVerifyBtn');
+  const key = input.value.trim();
+  if(!key){
+    statusEl.innerHTML = '<span style="color:var(--danger)">ライセンスキーを入力してください</span>';
+    return;
+  }
+  btn.disabled = true;
+  statusEl.innerHTML = '確認中...';
+  const result = await verifyLicenseKey(key);
+  btn.disabled = false;
+  if(result && result.success){
+    data.premium = true;
+    data.licenseKey = key;
+    saveData();
+    renderSettings();
+    applyTheme(data.theme);
+    if(document.getElementById('view-stats').classList.contains('active')) renderStatsView();
+  } else {
+    statusEl.innerHTML = `<span style="color:var(--danger)">${(result && result.message) || '認証に失敗しました'}</span>`;
+  }
+});
 document.getElementById('packSizeDec').addEventListener('click', ()=>{
   data.packSize = Math.max(1, data.packSize - 1);
   saveData();
