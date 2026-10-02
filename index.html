@@ -1002,14 +1002,12 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
       labelEls += `<text x="${cx.toFixed(1)}" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${labels[i]}</text>`;
     }
   });
-  const firstVisibleIndex = Math.max(0, n - visibleCount);
-  const barsLeftEdge = firstVisibleIndex * slotPx + padL;
   const barsRightEdge = (n - 1) * slotPx + padL + barW;
-  const axisLine = `<line x1="${barsLeftEdge.toFixed(1)}" y1="${H-padB}" x2="${barsRightEdge.toFixed(1)}" y2="${H-padB}" stroke="var(--accent)" stroke-width="1"></line>`;
+  const axisLine = `<line class="chart-axis-line" x1="${padL}" y1="${H-padB}" x2="${barsRightEdge.toFixed(1)}" y2="${H-padB}" stroke="var(--accent)" stroke-width="1"></line>`;
   let goalLine = '';
   if(goalLineValue){
     const gy = H - padB - (goalLineValue / maxV) * (H - padT - padB);
-    goalLine = `<line x1="${barsLeftEdge.toFixed(1)}" y1="${gy.toFixed(1)}" x2="${barsRightEdge.toFixed(1)}" y2="${gy.toFixed(1)}" stroke="var(--danger)" stroke-width="1"></line>`;
+    goalLine = `<line class="chart-goal-line" x1="${padL}" y1="${gy.toFixed(1)}" x2="${barsRightEdge.toFixed(1)}" y2="${gy.toFixed(1)}" stroke="var(--danger)" stroke-width="1"></line>`;
   }
   let rowLabelEls = '';
   if(rowLabels){
@@ -1024,18 +1022,26 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:${n > visibleCount ? 'scroll' : 'hidden'};-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
   const scrollDiv = el.querySelector('.chart-scroll');
   if(scrollDiv){
+    const lineEls = el.querySelectorAll('.chart-axis-line, .chart-goal-line');
+    const updateLineStart = () => {
+      const x1 = Math.max(padL, scrollDiv.scrollLeft);
+      lineEls.forEach(line => line.setAttribute('x1', x1.toFixed(1)));
+    };
     if(n <= visibleCount){
       scrollDiv.scrollLeft = 0;
+      updateLineStart();
     } else {
       const applyScroll = () => {
         const maxScroll = Math.max(0, scrollDiv.scrollWidth - scrollDiv.clientWidth);
         const visibleBars = Math.max(1, Math.floor(scrollDiv.clientWidth / slotPx));
-        const target = Math.max(0, (n - visibleBars) * slotPx + 10);
+        const target = Math.max(0, (n - visibleBars) * slotPx + 14);
         scrollDiv.scrollLeft = Math.min(target, maxScroll);
+        updateLineStart();
       };
       applyScroll();
       requestAnimationFrame(applyScroll);
       requestAnimationFrame(() => requestAnimationFrame(applyScroll));
+      scrollDiv.addEventListener('scroll', updateLineStart);
     }
   }
 }
