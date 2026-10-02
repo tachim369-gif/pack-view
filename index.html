@@ -200,8 +200,8 @@
   .cal-cell.today{border-color:var(--accent);}
   .cal-cell .memo-dot{position:absolute;bottom:5px;right:7px;width:5px;height:5px;border-radius:50%;background:var(--accent);}
   .cal-cell.over-goal .c{color:var(--danger);}
-  .cal-stats{font-size:12px;color:var(--sub);margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
-  .cal-stats b{color:var(--text-card);font-size:14px;}
+  .cal-stats{font-size:16px;color:var(--sub);margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .cal-stats b{color:var(--text-card);font-size:16px;}
 
   /* memo */
   .memo-item{
@@ -347,11 +347,11 @@
         <div class="check-line">累計金額 <b id="statsTotalCost">¥0</b>　平均金額 <b id="statsAvgCost">¥0</b>/日</div>
       </div>
       <div class="card">
-        <div class="section-title" style="margin:0 0 10px">週別推移</div>
+        <div class="section-title" style="margin:0 0 20px">週別推移</div>
         <div id="statsWeekChart"></div>
       </div>
       <div class="card">
-        <div class="section-title" style="margin:0 0 10px">月別推移</div>
+        <div class="section-title" style="margin:0 0 20px">月別推移</div>
         <div id="statsMonthChart"></div>
       </div>
       <div class="card">
@@ -949,11 +949,12 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   const costRowY = hasCostRow ? nextRowY : null; if(hasCostRow) nextRowY += 12;
   const totalH = nextRowY - 5;
   const n = values.length;
-  const visibleCount = 6;
+  const visibleCount = 5;
   const labelColW = rowLabels ? 52 : 0;
   const availableWidth = Math.max((el.clientWidth || 302) - labelColW, 100);
   const slotPx = Math.max(20, Math.floor(availableWidth / visibleCount));
-  const barW = slotPx - 6;
+  const refSlotPx = Math.max(20, Math.floor(availableWidth / 6));
+  const barW = refSlotPx - 6;
   const totalW = n * slotPx;
   const getThreshold = i => {
     if(thresholds === undefined || thresholds === null) return 0;
@@ -1011,11 +1012,11 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   }
   let rowLabelEls = '';
   if(rowLabels){
-    if(rowLabels.value) rowLabelEls += `<text x="0" y="${valueRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.value}</text>`;
-    if(rowLabels.cost && costs) rowLabelEls += `<text x="0" y="${costRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.cost}</text>`;
-    if(rowLabels.period) rowLabelEls += `<text x="0" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.period}</text>`;
-    if(rowLabels.overDays && hasOverRow) rowLabelEls += `<text x="0" y="${overRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.overDays}</text>`;
-    if(rowLabels.avg && hasAvgRow) rowLabelEls += `<text x="0" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.avg}</text>`;
+    if(rowLabels.value) rowLabelEls += `<text x="0" y="${valueRowY}" font-size="12" font-weight="600" fill="var(--sub)" text-anchor="start">${rowLabels.value}</text>`;
+    if(rowLabels.cost && costs) rowLabelEls += `<text x="0" y="${costRowY}" font-size="12" font-weight="600" fill="var(--sub)" text-anchor="start">${rowLabels.cost}</text>`;
+    if(rowLabels.period) rowLabelEls += `<text x="0" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--sub)" text-anchor="start">${rowLabels.period}</text>`;
+    if(rowLabels.overDays && hasOverRow) rowLabelEls += `<text x="0" y="${overRowY}" font-size="12" font-weight="600" fill="var(--sub)" text-anchor="start">${rowLabels.overDays}</text>`;
+    if(rowLabels.avg && hasAvgRow) rowLabelEls += `<text x="0" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--sub)" text-anchor="start">${rowLabels.avg}</text>`;
   }
   const maxContainerWidth = n <= visibleCount ? totalW : visibleCount * slotPx;
   const rowLabelSvg = rowLabels ? `<svg width="52" height="${totalH}" viewBox="0 0 52 ${totalH}" style="display:block;flex:0 0 auto;">${rowLabelEls}</svg>` : '';
