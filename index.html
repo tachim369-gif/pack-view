@@ -966,6 +966,8 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   let labelEls = '';
   let valueEls = '';
   let hitAreas = '';
+  let clipDefs = '';
+  const clipPrefix = `clip-${(el.id || 'c')}`;
   values.forEach((v, i) => {
     const x = i * slotPx + padL;
     const cx = x + barW / 2;
@@ -975,32 +977,38 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     const h = v > 0 ? Math.max((v / maxV) * (H - padT - padB), 2) : 2;
     const y = H - padB - h;
     const t = getThreshold(i);
+    let colBars = '';
     if(t > 0 && v > t){
       const hBase = Math.max((t / maxV) * (H - padT - padB), 0);
       const yBase = H - padB - hBase;
       const hOver = Math.max(h - hBase, 1);
       const yOver = yBase - hOver;
-      bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${yBase.toFixed(1)}" width="${barW.toFixed(1)}" height="${hBase.toFixed(1)}" rx="1.5"></rect>`;
-      bars += `<rect class="chart-bar over" x="${x.toFixed(1)}" y="${yOver.toFixed(1)}" width="${barW.toFixed(1)}" height="${hOver.toFixed(1)}" rx="1.5"></rect>`;
+      colBars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${yBase.toFixed(1)}" width="${barW.toFixed(1)}" height="${hBase.toFixed(1)}" rx="1.5"></rect>`;
+      colBars += `<rect class="chart-bar over" x="${x.toFixed(1)}" y="${yOver.toFixed(1)}" width="${barW.toFixed(1)}" height="${hOver.toFixed(1)}" rx="1.5"></rect>`;
     } else {
-      bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
+      colBars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
     }
+    const slotX0 = i * slotPx;
+    const clipId = `${clipPrefix}-${i}`;
+    clipDefs += `<clipPath id="${clipId}"><rect x="${slotX0.toFixed(1)}" y="0" width="${slotPx.toFixed(1)}" height="${totalH}"></rect></clipPath>`;
+    let colText = colBars;
     const valueColor = (t > 0 && v > t) ? 'var(--danger)' : 'var(--text-card)';
-    valueEls += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="12" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
+    colText += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="12" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
     if(overDays && overDays[i] !== undefined && overDays[i] !== null){
       const overParts = String(overDays[i]).split('/');
       const overNumColor = overParts[0] !== '0' ? 'var(--danger)' : 'var(--text-card)';
-      valueEls += `<text x="${cx.toFixed(1)}" y="${overRowY}" font-size="12" font-weight="600" text-anchor="middle"><tspan fill="${overNumColor}">${overParts[0]}</tspan><tspan fill="var(--text-card)">/${overParts[1]}</tspan></text>`;
+      colText += `<text x="${cx.toFixed(1)}" y="${overRowY}" font-size="12" font-weight="600" text-anchor="middle"><tspan fill="${overNumColor}">${overParts[0]}</tspan><tspan fill="var(--text-card)">/${overParts[1]}</tspan></text>`;
     }
     if(avgs && avgs[i] !== undefined && avgs[i] !== null){
-      valueEls += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${avgs[i]}</text>`;
+      colText += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${avgs[i]}</text>`;
     }
     if(costs && costs[i] !== undefined){
-      valueEls += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
+      colText += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
     }
     if(labels && labels[i] !== undefined){
-      labelEls += `<text x="${cx.toFixed(1)}" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${labels[i]}</text>`;
+      colText += `<text x="${cx.toFixed(1)}" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${labels[i]}</text>`;
     }
+    valueEls += `<g clip-path="url(#${clipId})">${colText}</g>`;
   });
   const barsRightEdge = (n - 1) * slotPx + padL + barW;
   const axisLine = `<line class="chart-axis-line" x1="${padL}" y1="${H-padB}" x2="${barsRightEdge.toFixed(1)}" y2="${H-padB}" stroke="var(--accent)" stroke-width="1"></line>`;
@@ -1019,7 +1027,7 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   }
   const maxContainerWidth = n <= visibleCount ? totalW : (visibleCount * slotPx + padR);
   const rowLabelSvg = rowLabels ? `<svg width="52" height="${totalH}" viewBox="0 0 52 ${totalH}" style="display:block;flex:0 0 auto;">${rowLabelEls}</svg>` : '';
-  el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:${n > visibleCount ? 'scroll' : 'hidden'};-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
+  el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:${n > visibleCount ? 'scroll' : 'hidden'};-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;"><defs>${clipDefs}</defs>${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
   const scrollDiv = el.querySelector('.chart-scroll');
   if(scrollDiv){
     const lineEls = el.querySelectorAll('.chart-axis-line, .chart-goal-line');
@@ -1034,7 +1042,7 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
       const applyScroll = () => {
         const maxScroll = Math.max(0, scrollDiv.scrollWidth - scrollDiv.clientWidth);
         const visibleBars = Math.max(1, Math.floor(scrollDiv.clientWidth / slotPx));
-        const target = Math.max(0, (n - visibleBars) * slotPx + 14);
+        const target = Math.max(0, (n - visibleBars) * slotPx);
         scrollDiv.scrollLeft = Math.min(target, maxScroll);
         updateLineStart();
       };
