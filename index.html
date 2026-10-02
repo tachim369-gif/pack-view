@@ -134,7 +134,7 @@
   }
 
   .row-between{display:flex;align-items:center;justify-content:space-between;}
-  .section-title{font-size:14px;color:var(--sub);margin:0 0 10px;font-weight:600;}
+  .section-title{font-size:16px;color:var(--sub);margin:0 0 10px;font-weight:600;}
   .pack-remaining{display:flex;align-items:center;gap:14px;}
   .pack-remaining .val{font-size:34px;font-weight:700;}
   .pack-remaining .of{color:var(--sub);font-size:14px;}
@@ -177,7 +177,7 @@
     font-weight:500;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
   }
   .remain-controls .box.remain-adj:active{transform:scale(.9);}
-  .check-line{margin-top:12px;font-size:13px;color:var(--sub);line-height:1.6;}
+  .check-line{margin-top:12px;font-size:16px;color:var(--sub);line-height:1.6;}
   .check-line b{color:var(--text-card);}
   .check-warn{color:var(--warn);}
   .check-danger{color:var(--danger);}
@@ -208,21 +208,18 @@
     background:var(--card);border:1px solid var(--border);border-radius:14px;
     padding:14px 16px;margin-bottom:10px;
   }
-  .memo-item .memo-date{font-size:12px;color:var(--sub);margin-bottom:4px;font-weight:600;}
-  .memo-item .memo-text{font-size:14px;color:var(--text-card);white-space:pre-wrap;line-height:1.5;}
+  .memo-item .memo-date{font-size:16px;color:var(--sub);margin-bottom:4px;font-weight:600;}
+  .memo-item .memo-text{font-size:16px;color:var(--text-card);white-space:pre-wrap;line-height:1.5;}
 
   /* settings */
   .field{margin-bottom:16px;}
-  .field label{display:block;font-size:13px;color:var(--sub);margin-bottom:8px;}
+  .field label{display:block;font-size:16px;color:var(--sub);margin-bottom:8px;}
   .field .stepper{display:flex;align-items:center;gap:14px;}
   .field .stepper .n{font-size:26px;font-weight:700;min-width:52px;text-align:center;}
   .field .stepper button{width:38px;height:38px;border-radius:10px;background:var(--card2);border:1px solid var(--border);color:var(--text-card);font-size:18px;}
   .field input[type=number]{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text-card);font-size:18px;padding:10px 14px;border-radius:10px;}
   .chart-bar{fill:var(--accent);}
   .chart-bar.over{fill:var(--danger);}
-  .chart-tooltip{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--card2);color:var(--text-card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;font-size:14px;line-height:1.7;box-shadow:0 4px 16px rgba(0,0,0,0.4);z-index:5;white-space:nowrap;}
-  .chart-tooltip-close{position:absolute;top:2px;right:6px;font-size:16px;line-height:1;color:var(--sub);cursor:pointer;padding:4px;}
-  .chart-tooltip-calbtn{display:block;width:100%;margin-top:8px;padding:8px 0;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text-card);font-size:12px;font-weight:700;white-space:nowrap;}
   .theme-swatches{display:flex;gap:14px;}
   .theme-swatches .swatch{
     width:40px;height:40px;border-radius:50%;border:2px solid transparent;
@@ -350,11 +347,11 @@
         <div class="check-line">累計金額 <b id="statsTotalCost">¥0</b>　平均金額 <b id="statsAvgCost">¥0</b>/日</div>
       </div>
       <div class="card">
-        <div class="section-title" style="margin:0 0 10px">週別推移(直近8週間)</div>
+        <div class="section-title" style="margin:0 0 10px">週別推移</div>
         <div id="statsWeekChart"></div>
       </div>
       <div class="card">
-        <div class="section-title" style="margin:0 0 10px">月別推移(直近8ヶ月)</div>
+        <div class="section-title" style="margin:0 0 10px">月別推移</div>
         <div id="statsMonthChart"></div>
       </div>
       <div class="card">
@@ -451,8 +448,8 @@
     <div class="inner">
       <button class="navbtn active" data-view="home"><span class="ic">●</span>ホーム</button>
       <button class="navbtn" data-view="cal"><span class="ic">▦</span>カレンダー</button>
-      <button class="navbtn" data-view="memo"><span class="ic">✎</span>メモ</button>
       <button class="navbtn" data-view="stats"><span class="ic">Σ</span>統計</button>
+      <button class="navbtn" data-view="memo"><span class="ic">✎</span>メモ</button>
       <button class="navbtn" data-view="settings"><span class="ic">⚙</span>設定</button>
     </div>
   </nav>
@@ -463,9 +460,9 @@
   <div class="modal">
     <button class="close-x" id="startModalClose">✕</button>
     <h3>本日の状況を入力</h3>
-    <label style="display:block;font-size:13px;color:var(--sub);margin-bottom:8px;">本日の喫煙本数</label>
+    <label style="display:block;font-size:16px;color:var(--sub);margin-bottom:8px;">本日の喫煙本数</label>
     <input type="number" id="startCountInput" inputmode="numeric">
-    <label style="display:block;font-size:13px;color:var(--sub);margin-bottom:8px;">パッケージ内残数</label>
+    <label style="display:block;font-size:16px;color:var(--sub);margin-bottom:8px;">パッケージ内残数</label>
     <input type="number" id="startRemainInput" inputmode="numeric">
     <div class="btns">
       <button class="cancel" id="startModalCancel">キャンセル</button>
@@ -480,10 +477,10 @@
     <button class="close-x" id="dayModalClose">✕</button>
     <h3 id="dayModalTitle">8月15日</h3>
     <div id="dayCountField">
-      <label style="display:block;font-size:13px;color:var(--sub);margin-bottom:8px;">本数</label>
+      <label style="display:block;font-size:16px;color:var(--sub);margin-bottom:8px;">本数</label>
       <input type="number" id="dayCountInput" inputmode="numeric">
     </div>
-    <label style="display:block;font-size:13px;color:var(--sub);margin-bottom:8px;">メモ</label>
+    <label style="display:block;font-size:16px;color:var(--sub);margin-bottom:8px;">メモ</label>
     <textarea id="dayMemoInput" placeholder="メモを入力"></textarea>
     <div class="btns">
       <button class="save" id="dayCountSave" style="width:100%;">保存</button>
@@ -558,6 +555,10 @@ function fmtHeaderDate(){
 }
 
 let data = loadData();
+if(location.protocol === 'file:'){
+  // ローカルでindex.htmlを直接開いた場合のみ、確認用にプレミアム機能を自動解放する(デプロイ後のhttps環境には影響しない)
+  data.premium = true;
+}
 
 function ensureToday(){
   const key = todayKey();
@@ -940,16 +941,16 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   const hasOverRow = !!overDays;
   const hasAvgRow = !!avgs;
   const hasCostRow = !!costs;
-  let nextRowY = H + 9;
-  const periodRowY = nextRowY; nextRowY += 10;
-  const overRowY = hasOverRow ? nextRowY : null; if(hasOverRow) nextRowY += 10;
-  const valueRowY = nextRowY; nextRowY += 10;
-  const avgRowY = hasAvgRow ? nextRowY : null; if(hasAvgRow) nextRowY += 10;
-  const costRowY = hasCostRow ? nextRowY : null; if(hasCostRow) nextRowY += 10;
+  let nextRowY = H + 11;
+  const periodRowY = nextRowY; nextRowY += 12;
+  const overRowY = hasOverRow ? nextRowY : null; if(hasOverRow) nextRowY += 12;
+  const valueRowY = nextRowY; nextRowY += 12;
+  const avgRowY = hasAvgRow ? nextRowY : null; if(hasAvgRow) nextRowY += 12;
+  const costRowY = hasCostRow ? nextRowY : null; if(hasCostRow) nextRowY += 12;
   const totalH = nextRowY - 5;
   const n = values.length;
-  const visibleCount = 8;
-  const labelColW = rowLabels ? 44 : 0;
+  const visibleCount = 6;
+  const labelColW = rowLabels ? 52 : 0;
   const availableWidth = Math.max((el.clientWidth || 302) - labelColW, 100);
   const slotPx = Math.max(20, Math.floor(availableWidth / visibleCount));
   const barW = slotPx - 6;
@@ -969,7 +970,9 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     if(v === null || v === undefined){
       return;
     }
-    hitAreas += `<rect class="chart-hit" data-i="${i}" x="${x.toFixed(1)}" y="0" width="${barW.toFixed(1)}" height="${totalH}" fill="transparent"></rect>`;
+    if(monthTargets && monthTargets[i]){
+      hitAreas += `<rect class="chart-hit" data-i="${i}" x="${x.toFixed(1)}" y="0" width="${barW.toFixed(1)}" height="${totalH}" fill="transparent" style="cursor:pointer;"></rect>`;
+    }
     const h = v > 0 ? Math.max((v / maxV) * (H - padT - padB), 2) : 2;
     const y = H - padB - h;
     const t = getThreshold(i);
@@ -984,20 +987,20 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
       bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
     }
     const valueColor = (t > 0 && v > t) ? 'var(--danger)' : 'var(--text-card)';
-    valueEls += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="8" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
+    valueEls += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="12" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
     if(overDays && overDays[i] !== undefined && overDays[i] !== null){
       const overParts = String(overDays[i]).split('/');
       const overNumColor = overParts[0] !== '0' ? 'var(--danger)' : 'var(--text-card)';
-      valueEls += `<text x="${cx.toFixed(1)}" y="${overRowY}" font-size="8" font-weight="600" text-anchor="middle"><tspan fill="${overNumColor}">${overParts[0]}</tspan><tspan fill="var(--text-card)">/${overParts[1]}</tspan></text>`;
+      valueEls += `<text x="${cx.toFixed(1)}" y="${overRowY}" font-size="12" font-weight="600" text-anchor="middle"><tspan fill="${overNumColor}">${overParts[0]}</tspan><tspan fill="var(--text-card)">/${overParts[1]}</tspan></text>`;
     }
     if(avgs && avgs[i] !== undefined && avgs[i] !== null){
-      valueEls += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="middle">${avgs[i]}</text>`;
+      valueEls += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${avgs[i]}</text>`;
     }
     if(costs && costs[i] !== undefined){
-      valueEls += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
+      valueEls += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
     }
     if(labels && labels[i] !== undefined){
-      labelEls += `<text x="${cx.toFixed(1)}" y="${periodRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="middle">${labels[i]}</text>`;
+      labelEls += `<text x="${cx.toFixed(1)}" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${labels[i]}</text>`;
     }
   });
   const axisLine = `<line x1="0" y1="${H-padB}" x2="${totalW}" y2="${H-padB}" stroke="var(--accent)" stroke-width="1"></line>`;
@@ -1008,14 +1011,14 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   }
   let rowLabelEls = '';
   if(rowLabels){
-    if(rowLabels.value) rowLabelEls += `<text x="0" y="${valueRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.value}</text>`;
-    if(rowLabels.cost && costs) rowLabelEls += `<text x="0" y="${costRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.cost}</text>`;
-    if(rowLabels.period) rowLabelEls += `<text x="0" y="${periodRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.period}</text>`;
-    if(rowLabels.overDays && hasOverRow) rowLabelEls += `<text x="0" y="${overRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.overDays}</text>`;
-    if(rowLabels.avg && hasAvgRow) rowLabelEls += `<text x="0" y="${avgRowY}" font-size="8" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.avg}</text>`;
+    if(rowLabels.value) rowLabelEls += `<text x="0" y="${valueRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.value}</text>`;
+    if(rowLabels.cost && costs) rowLabelEls += `<text x="0" y="${costRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.cost}</text>`;
+    if(rowLabels.period) rowLabelEls += `<text x="0" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.period}</text>`;
+    if(rowLabels.overDays && hasOverRow) rowLabelEls += `<text x="0" y="${overRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.overDays}</text>`;
+    if(rowLabels.avg && hasAvgRow) rowLabelEls += `<text x="0" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="start">${rowLabels.avg}</text>`;
   }
   const maxContainerWidth = n <= visibleCount ? totalW : visibleCount * slotPx;
-  const rowLabelSvg = rowLabels ? `<svg width="44" height="${totalH}" viewBox="0 0 44 ${totalH}" style="display:block;flex:0 0 auto;">${rowLabelEls}</svg>` : '';
+  const rowLabelSvg = rowLabels ? `<svg width="52" height="${totalH}" viewBox="0 0 52 ${totalH}" style="display:block;flex:0 0 auto;">${rowLabelEls}</svg>` : '';
   el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:scroll;-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
   const scrollDiv = el.querySelector('.chart-scroll');
   if(scrollDiv){
@@ -1029,52 +1032,15 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     requestAnimationFrame(applyScroll);
     requestAnimationFrame(() => requestAnimationFrame(applyScroll));
   }
-
   el.querySelectorAll('.chart-hit').forEach(rect => {
     rect.addEventListener('click', () => {
       const i = parseInt(rect.dataset.i, 10);
-      const parts = [];
-      if(labels && labels[i] !== undefined) parts.push(`<div>期間: ${labels[i]}</div>`);
-      if(rowLabels && rowLabels.overDays && overDays && overDays[i] !== undefined && overDays[i] !== null){
-        const overParts = String(overDays[i]).split('/');
-        const overNumColor = overParts[0] !== '0' ? 'var(--danger)' : 'var(--text-card)';
-        parts.push(`<div>${rowLabels.overDays}: <span style="color:${overNumColor}">${overParts[0]}</span>/${overParts[1]}</div>`);
-      }
-      const vColor = (getThreshold(i) > 0 && values[i] > getThreshold(i)) ? 'var(--danger)' : 'var(--text-card)';
-      parts.push(`<div>${(rowLabels && rowLabels.value) || '合計'}: <span style="color:${vColor}">${fmtV(values[i])}</span></div>`);
-      if(rowLabels && rowLabels.avg && avgs && avgs[i] !== undefined && avgs[i] !== null) parts.push(`<div>${rowLabels.avg}: ${avgs[i]}</div>`);
-      if(rowLabels && rowLabels.cost && costs && costs[i] !== undefined) parts.push(`<div>${rowLabels.cost}: ¥${Math.round(costs[i]).toLocaleString()}</div>`);
-      let calBtnHtml = '';
-      if(monthTargets && monthTargets[i]){
-        calBtnHtml = `<button class="chart-tooltip-calbtn" data-y="${monthTargets[i].y}" data-m="${monthTargets[i].m}">カレンダー</button>`;
-      }
-      showChartTooltip(el, parts.join('') + calBtnHtml);
-    });
-  });
-}
-
-function showChartTooltip(el, html){
-  const parent = el.parentElement;
-  let tip = parent.querySelector('.chart-tooltip');
-  if(!tip){
-    tip = document.createElement('div');
-    tip.className = 'chart-tooltip';
-    parent.style.position = 'relative';
-    parent.appendChild(tip);
-  }
-  tip.innerHTML = `<div class="chart-tooltip-close">×</div>${html}`;
-  tip.querySelector('.chart-tooltip-close').addEventListener('click', () => { tip.style.display = 'none'; });
-  const calBtn = tip.querySelector('.chart-tooltip-calbtn');
-  if(calBtn){
-    calBtn.addEventListener('click', () => {
-      const y = parseInt(calBtn.dataset.y, 10);
-      const m = parseInt(calBtn.dataset.m, 10);
-      tip.style.display = 'none';
-      calDate = new Date(y, m, 1);
+      const target = monthTargets && monthTargets[i];
+      if(!target) return;
+      calDate = new Date(target.y, target.m, 1);
       switchView('cal');
     });
-  }
-  tip.style.display = 'block';
+  });
 }
 
 function renderWeeklyChart(){
@@ -1575,9 +1541,8 @@ document.getElementById('backupImportInput').addEventListener('change', (e)=>{
 });
 
 /* ---------- NAV ---------- */
-const VIEW_ORDER = ['home', 'cal', 'memo', 'stats', 'settings'];
+const VIEW_ORDER = ['home', 'cal', 'stats', 'memo', 'settings'];
 function switchView(view){
-  document.querySelectorAll('.chart-tooltip').forEach(t => { t.style.display = 'none'; });
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
@@ -1592,49 +1557,6 @@ document.querySelectorAll('.navbtn').forEach(btn=>{
     switchView(btn.dataset.view);
   });
 });
-
-/* ---------- SWIPE BETWEEN VIEWS ---------- */
-(function(){
-  const mainEl = document.querySelector('main');
-  let touchStartX = 0, touchStartY = 0, touchActive = false;
-  mainEl.addEventListener('touchstart', (e)=>{
-    if(e.touches.length !== 1) return;
-    // ignore swipes that start inside a modal
-    if(document.querySelector('.modal-bg.show')) return;
-    // ignore swipes that start inside a horizontally-scrollable chart
-    if(e.target.closest('.chart-scroll')) { touchActive = false; return; }
-    // ignore swipes that start inside the chart detail popup
-    if(e.target.closest('.chart-tooltip')) { touchActive = false; return; }
-    // ignore swipes that start on the same horizontal band as a chart (left/right extension of the chart area)
-    const touchY = e.touches[0].clientY;
-    const activeViewEl = document.querySelector('.view.active');
-    if(activeViewEl){
-      const scrolls = activeViewEl.querySelectorAll('.chart-scroll');
-      for(let i = 0; i < scrolls.length; i++){
-        const r = scrolls[i].getBoundingClientRect();
-        if(touchY >= r.top && touchY <= r.bottom){ touchActive = false; return; }
-      }
-    }
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    touchActive = true;
-  }, { passive: true });
-  mainEl.addEventListener('touchend', (e)=>{
-    if(!touchActive) return;
-    touchActive = false;
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    const dy = e.changedTouches[0].clientY - touchStartY;
-    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    const activeView = document.querySelector('.view.active').id.replace('view-', '');
-    const idx = VIEW_ORDER.indexOf(activeView);
-    if(idx === -1) return;
-    if(dx < 0 && idx < VIEW_ORDER.length - 1){
-      switchView(VIEW_ORDER[idx + 1]);
-    } else if(dx > 0 && idx > 0){
-      switchView(VIEW_ORDER[idx - 1]);
-    }
-  }, { passive: true });
-})();
 
 /* ---------- HEADER CLOCK ---------- */
 function updateHeaderClock(){
