@@ -955,7 +955,8 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   const slotPx = Math.max(20, Math.floor(availableWidth / visibleCount));
   const refSlotPx = Math.max(20, Math.floor(availableWidth / 6));
   const barW = refSlotPx - 6;
-  const totalW = n * slotPx;
+  const padL = 14, padR = 14;
+  const totalW = n * slotPx + padL + padR;
   const getThreshold = i => {
     if(thresholds === undefined || thresholds === null) return 0;
     return Array.isArray(thresholds) ? (thresholds[i] || 0) : thresholds;
@@ -966,7 +967,7 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   let valueEls = '';
   let hitAreas = '';
   values.forEach((v, i) => {
-    const x = i * slotPx;
+    const x = i * slotPx + padL;
     const cx = x + barW / 2;
     if(v === null || v === undefined){
       return;
