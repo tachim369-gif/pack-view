@@ -951,11 +951,11 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   const n = values.length;
   const visibleCount = 5;
   const labelColW = rowLabels ? 52 : 0;
-  const availableWidth = Math.max((el.clientWidth || 302) - labelColW, 100);
+  const padL = 14, padR = 14;
+  const availableWidth = Math.max((el.clientWidth || 302) - labelColW - padL - padR, 100);
   const slotPx = Math.max(20, Math.floor(availableWidth / visibleCount));
   const refSlotPx = Math.max(20, Math.floor(availableWidth / 6));
   const barW = refSlotPx - 6;
-  const padL = 14, padR = 14;
   const totalW = n * slotPx + padL + padR;
   const getThreshold = i => {
     if(thresholds === undefined || thresholds === null) return 0;
@@ -1018,18 +1018,22 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   }
   const maxContainerWidth = n <= visibleCount ? totalW : visibleCount * slotPx;
   const rowLabelSvg = rowLabels ? `<svg width="52" height="${totalH}" viewBox="0 0 52 ${totalH}" style="display:block;flex:0 0 auto;">${rowLabelEls}</svg>` : '';
-  el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:scroll;-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
+  el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:${n > visibleCount ? 'scroll' : 'hidden'};-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
   const scrollDiv = el.querySelector('.chart-scroll');
   if(scrollDiv){
-    const applyScroll = () => {
-      const maxScroll = Math.max(0, scrollDiv.scrollWidth - scrollDiv.clientWidth);
-      const visibleBars = Math.max(1, Math.floor(scrollDiv.clientWidth / slotPx));
-      const target = Math.max(0, totalW - visibleBars * slotPx);
-      scrollDiv.scrollLeft = Math.min(target, maxScroll);
-    };
-    applyScroll();
-    requestAnimationFrame(applyScroll);
-    requestAnimationFrame(() => requestAnimationFrame(applyScroll));
+    if(n <= visibleCount){
+      scrollDiv.scrollLeft = 0;
+    } else {
+      const applyScroll = () => {
+        const maxScroll = Math.max(0, scrollDiv.scrollWidth - scrollDiv.clientWidth);
+        const visibleBars = Math.max(1, Math.floor(scrollDiv.clientWidth / slotPx));
+        const target = Math.max(0, (n - visibleBars) * slotPx);
+        scrollDiv.scrollLeft = Math.min(target, maxScroll);
+      };
+      applyScroll();
+      requestAnimationFrame(applyScroll);
+      requestAnimationFrame(() => requestAnimationFrame(applyScroll));
+    }
   }
 }
 
