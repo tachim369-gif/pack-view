@@ -355,10 +355,12 @@
         <div id="statsMonthChart"></div>
       </div>
       <div class="card">
-        <div class="section-title" style="margin:0 0 10px">連続記録</div>
+        <div class="section-title" style="margin:0 0 10px">記録</div>
+        <div class="check-line">一日最大本数 <b id="statsMaxDay">0</b>本 <span id="statsMaxDayDate"></span></div>
+        <div class="check-line">一日最小本数 <b id="statsMinDay">0</b>本 <span id="statsMinDayDate"></span></div>
         <div class="check-line">目標本数以下の連続日数 <b id="statsAchieveStreak">0</b>日 <span id="statsAchieveRange"></span></div>
         <div class="check-line">目標本数超過の連続日数 <b id="statsOverStreak" style="color:var(--danger)">0</b>日 <span id="statsOverRange"></span></div>
-        <div class="check-line">0本の連続日数 <b id="statsZeroStreak">0</b>日 <span id="statsZeroRange"></span></div>
+        <div class="check-line">0本(禁煙)の連続日数 <b id="statsZeroStreak">0</b>日 <span id="statsZeroRange"></span></div>
       </div>
       </div>
     </section>
@@ -951,8 +953,9 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   const n = values.length;
   const visibleCount = 5;
   const labelColW = rowLabels ? 52 : 0;
-  const padL = 26, padR = 14;
-  const availableWidth = Math.max((el.clientWidth || 302) - labelColW - padL - padR, 100);
+  const outerGap = rowLabels ? 14 : 0;
+  const padL = 4, padR = 14;
+  const availableWidth = Math.max((el.clientWidth || 302) - labelColW - outerGap - padL - padR, 100);
   const slotPx = Math.max(20, Math.floor(availableWidth / visibleCount)) + 6;
   const refSlotPx = Math.max(20, Math.floor(availableWidth / 6));
   const barW = refSlotPx - 6;
@@ -966,8 +969,6 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   let labelEls = '';
   let valueEls = '';
   let hitAreas = '';
-  let clipDefs = '';
-  const clipPrefix = `clip-${(el.id || 'c')}`;
   values.forEach((v, i) => {
     const x = i * slotPx + padL;
     const cx = x + barW / 2;
@@ -977,38 +978,32 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     const h = v > 0 ? Math.max((v / maxV) * (H - padT - padB), 2) : 2;
     const y = H - padB - h;
     const t = getThreshold(i);
-    let colBars = '';
     if(t > 0 && v > t){
       const hBase = Math.max((t / maxV) * (H - padT - padB), 0);
       const yBase = H - padB - hBase;
       const hOver = Math.max(h - hBase, 1);
       const yOver = yBase - hOver;
-      colBars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${yBase.toFixed(1)}" width="${barW.toFixed(1)}" height="${hBase.toFixed(1)}" rx="1.5"></rect>`;
-      colBars += `<rect class="chart-bar over" x="${x.toFixed(1)}" y="${yOver.toFixed(1)}" width="${barW.toFixed(1)}" height="${hOver.toFixed(1)}" rx="1.5"></rect>`;
+      bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${yBase.toFixed(1)}" width="${barW.toFixed(1)}" height="${hBase.toFixed(1)}" rx="1.5"></rect>`;
+      bars += `<rect class="chart-bar over" x="${x.toFixed(1)}" y="${yOver.toFixed(1)}" width="${barW.toFixed(1)}" height="${hOver.toFixed(1)}" rx="1.5"></rect>`;
     } else {
-      colBars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
+      bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
     }
-    const slotX0 = i * slotPx;
-    const clipId = `${clipPrefix}-${i}`;
-    clipDefs += `<clipPath id="${clipId}"><rect x="${slotX0.toFixed(1)}" y="0" width="${slotPx.toFixed(1)}" height="${totalH}"></rect></clipPath>`;
-    let colText = colBars;
     const valueColor = (t > 0 && v > t) ? 'var(--danger)' : 'var(--text-card)';
-    colText += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="12" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
+    valueEls += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="12" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
     if(overDays && overDays[i] !== undefined && overDays[i] !== null){
       const overParts = String(overDays[i]).split('/');
       const overNumColor = overParts[0] !== '0' ? 'var(--danger)' : 'var(--text-card)';
-      colText += `<text x="${cx.toFixed(1)}" y="${overRowY}" font-size="12" font-weight="600" text-anchor="middle"><tspan fill="${overNumColor}">${overParts[0]}</tspan><tspan fill="var(--text-card)">/${overParts[1]}</tspan></text>`;
+      valueEls += `<text x="${cx.toFixed(1)}" y="${overRowY}" font-size="12" font-weight="600" text-anchor="middle"><tspan fill="${overNumColor}">${overParts[0]}</tspan><tspan fill="var(--text-card)">/${overParts[1]}</tspan></text>`;
     }
     if(avgs && avgs[i] !== undefined && avgs[i] !== null){
-      colText += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${avgs[i]}</text>`;
+      valueEls += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${avgs[i]}</text>`;
     }
     if(costs && costs[i] !== undefined){
-      colText += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
+      valueEls += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
     }
     if(labels && labels[i] !== undefined){
-      colText += `<text x="${cx.toFixed(1)}" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${labels[i]}</text>`;
+      labelEls += `<text x="${cx.toFixed(1)}" y="${periodRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${labels[i]}</text>`;
     }
-    valueEls += `<g clip-path="url(#${clipId})">${colText}</g>`;
   });
   const barsRightEdge = (n - 1) * slotPx + padL + barW;
   const axisLine = `<line class="chart-axis-line" x1="${padL}" y1="${H-padB}" x2="${barsRightEdge.toFixed(1)}" y2="${H-padB}" stroke="var(--accent)" stroke-width="1"></line>`;
@@ -1025,30 +1020,26 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     if(rowLabels.overDays && hasOverRow) rowLabelEls += `<text x="52" y="${overRowY}" font-size="12" font-weight="600" fill="var(--sub)" text-anchor="end">${rowLabels.overDays}</text>`;
     if(rowLabels.avg && hasAvgRow) rowLabelEls += `<text x="52" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--sub)" text-anchor="end">${rowLabels.avg}</text>`;
   }
-  const maxContainerWidth = n <= visibleCount ? totalW : (visibleCount * slotPx + padR);
+  const viewportWidth = visibleCount * slotPx + padL + padR;
+  const maxContainerWidth = Math.min(totalW, viewportWidth);
   const rowLabelSvg = rowLabels ? `<svg width="52" height="${totalH}" viewBox="0 0 52 ${totalH}" style="display:block;flex:0 0 auto;">${rowLabelEls}</svg>` : '';
-  el.innerHTML = `<div style="display:flex;align-items:flex-start;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:${n > visibleCount ? 'scroll' : 'hidden'};-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;"><defs>${clipDefs}</defs>${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
+  el.innerHTML = `<div style="display:flex;align-items:flex-start;gap:${outerGap}px;">${rowLabelSvg}<div class="chart-scroll" style="flex:1 1 auto;max-width:${maxContainerWidth}px;overflow-x:${n > visibleCount ? 'scroll' : 'hidden'};-webkit-overflow-scrolling:touch;"><svg width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}" style="display:block;">${axisLine}${goalLine}${bars}${valueEls}${labelEls}${hitAreas}</svg></div></div>`;
   const scrollDiv = el.querySelector('.chart-scroll');
   if(scrollDiv){
     const lineEls = el.querySelectorAll('.chart-axis-line, .chart-goal-line');
     const updateLineStart = () => {
-      const x1 = Math.max(padL, scrollDiv.scrollLeft);
+      const x1 = scrollDiv.scrollLeft + padL;
       lineEls.forEach(line => line.setAttribute('x1', x1.toFixed(1)));
     };
-    if(n <= visibleCount){
-      scrollDiv.scrollLeft = 0;
+    const applyScroll = () => {
+      const target = Math.max(0, totalW - viewportWidth);
+      scrollDiv.scrollLeft = target;
       updateLineStart();
-    } else {
-      const applyScroll = () => {
-        const maxScroll = Math.max(0, scrollDiv.scrollWidth - scrollDiv.clientWidth);
-        const visibleBars = Math.max(1, Math.floor(scrollDiv.clientWidth / slotPx));
-        const target = Math.max(0, (n - visibleBars) * slotPx);
-        scrollDiv.scrollLeft = Math.min(target, maxScroll);
-        updateLineStart();
-      };
-      applyScroll();
-      requestAnimationFrame(applyScroll);
-      requestAnimationFrame(() => requestAnimationFrame(applyScroll));
+    };
+    applyScroll();
+    requestAnimationFrame(applyScroll);
+    requestAnimationFrame(() => requestAnimationFrame(applyScroll));
+    if(n > visibleCount){
       scrollDiv.addEventListener('scroll', updateLineStart);
     }
   }
@@ -1198,6 +1189,19 @@ function computeStreaks(){
   return { longestAchieve, achieveStart, achieveEnd, longestOver, overStart, overEnd, longestZero, zeroStart, zeroEnd };
 }
 
+function computeMinMaxDay(){
+  const keys = Object.keys(data.days)
+    .filter(k => data.days[k].count !== null && data.days[k].count !== undefined)
+    .sort();
+  let maxCount = null, maxKey = null, minCount = null, minKey = null;
+  keys.forEach(k => {
+    const c = data.days[k].count;
+    if(maxCount === null || c > maxCount){ maxCount = c; maxKey = k; }
+    if(minCount === null || c < minCount){ minCount = c; minKey = k; }
+  });
+  return { maxCount, maxKey, minCount, minKey };
+}
+
 function formatStreakRange(startKey, endKey){
   if(!startKey || !endKey) return '';
   const fmt = k => { const [y,m,d] = k.split('-'); return `${Number(m)}/${Number(d)}`; };
@@ -1219,6 +1223,14 @@ function renderStatsView(){
   document.getElementById('statsAchieveRange').textContent = formatStreakRange(achieveStart, achieveEnd);
   document.getElementById('statsOverRange').textContent = formatStreakRange(overStart, overEnd);
   document.getElementById('statsZeroRange').textContent = formatStreakRange(zeroStart, zeroEnd);
+  const { maxCount, maxKey, minCount, minKey } = computeMinMaxDay();
+  const fmtDay = k => { if(!k) return ''; const [y,m,d] = k.split('-'); return `(${Number(m)}/${Number(d)})`; };
+  const maxEl = document.getElementById('statsMaxDay');
+  maxEl.textContent = maxCount === null ? '-' : maxCount;
+  maxEl.style.color = (data.dailyGoal > 0 && maxCount !== null && maxCount > data.dailyGoal) ? 'var(--danger)' : '';
+  document.getElementById('statsMaxDayDate').textContent = fmtDay(maxKey);
+  document.getElementById('statsMinDay').textContent = minCount === null ? '-' : minCount;
+  document.getElementById('statsMinDayDate').textContent = fmtDay(minKey);
 }
 
 function renderTotalsCard(){
