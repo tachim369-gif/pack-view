@@ -184,19 +184,19 @@
   .check-ok{color:var(--ok);}
 
   /* calendar */
-  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-header{display:flex;align-items:center;justify-content:center;margin-bottom:14px;}
   .cal-header .title{font-size:16px;font-weight:700;}
   .cal-header button{background:var(--card2);border:1px solid var(--border);color:var(--text-card);width:34px;height:34px;border-radius:10px;font-size:16px;}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
   .cal-dow{text-align:center;font-size:11px;color:var(--sub);padding-bottom:4px;}
   .cal-cell{
-    aspect-ratio:1/1;border-radius:10px;background:var(--card);border:1px solid var(--border);
+    aspect-ratio:1/0.78;border-radius:10px;background:var(--card);border:1px solid var(--border);
     display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;
     position:relative;
   }
   .cal-cell.empty{background:transparent;border:none;}
-  .cal-cell .d{font-size:11px;color:var(--sub);position:absolute;top:4px;left:6px;}
-  .cal-cell .c{font-size:16px;font-weight:700;margin-top:6px;}
+  .cal-cell .d{font-size:11px;color:var(--sub);position:absolute;top:3px;left:6px;}
+  .cal-cell .c{font-size:16px;font-weight:700;margin-top:5px;}
   .cal-cell.today{border-color:var(--accent);}
   .cal-cell .memo-dot{position:absolute;bottom:5px;right:7px;width:5px;height:5px;border-radius:50%;background:var(--accent);}
   .cal-cell.over-goal .c{color:var(--danger);}
@@ -316,9 +316,7 @@
     <!-- CALENDAR -->
     <section class="view" id="view-cal">
       <div class="cal-header">
-        <button id="prevMonth">‹</button>
         <div class="title" id="calTitle">2026年8月</div>
-        <button id="nextMonth">›</button>
       </div>
       <div class="cal-grid" id="calDow"></div>
       <div class="cal-grid" id="calGrid" style="margin-top:6px;"></div>
@@ -882,11 +880,20 @@ function renderCalendar(){
   if(data.dailyGoal > 0){
     const overCount = monthKeys.filter(k => data.days[k].count > data.dailyGoal).length;
     const overColor = overCount > 0 ? 'var(--danger)' : 'var(--text-card)';
-    statsHtml += `　超過日数 <b><span style="color:${overColor}">${overCount}</span>日</b>`;
+    statsHtml += `　超過日数 <b><span style="color:${overColor}">${overCount}</span></b>日`;
     const achievedCount = monthKeys.filter(k => data.days[k].count <= data.dailyGoal).length;
-    statsHtml += `　達成日数 <b>${achievedCount}日</b>`;
+    statsHtml += `　達成日数 <b>${achievedCount}</b>日`;
   }
   statsHtml += `<br>月間合計 <b>${total}</b>本/月　月間平均 <b>${avg}</b>本/日`;
+  if(monthKeys.length){
+    const counts = monthKeys.map(k => data.days[k].count);
+    const maxC = Math.max(...counts);
+    const minC = Math.min(...counts);
+    const maxColor = (data.dailyGoal > 0 && maxC > data.dailyGoal) ? 'var(--danger)' : 'var(--text-card)';
+    statsHtml += `<br>月間最大本数 <b><span style="color:${maxColor}">${maxC}</span>本</b>　月間最小本数 <b>${minC}本</b>`;
+  } else {
+    statsHtml += `<br>月間最大本数 <b>-</b>　月間最小本数 <b>-</b>`;
+  }
   if(data.pricePerPack > 0){
     const costPerCig = data.pricePerPack / 20;
     const monthCost = Math.round(total * costPerCig);
@@ -1323,17 +1330,31 @@ document.getElementById('dayModalBg').addEventListener('click', (e)=>{
   if(e.target.id === 'dayModalBg') e.target.classList.remove('show');
 });
 
-document.getElementById('prevMonth').addEventListener('click', ()=>{
-  // 日にちを1日に固定してから月を変える(31日などで短い月をスキップするのを防ぐ)
+// 日にちを1日に固定してから月を変える(31日などで短い月をスキップするのを防ぐ)
+function shiftCalMonth(delta){
   calDate.setDate(1);
-  calDate.setMonth(calDate.getMonth()-1);
+  calDate.setMonth(calDate.getMonth() + delta);
   renderCalendar();
-});
-document.getElementById('nextMonth').addEventListener('click', ()=>{
-  calDate.setDate(1);
-  calDate.setMonth(calDate.getMonth()+1);
-  renderCalendar();
-});
+}
+(function(){
+  const calView = document.getElementById('view-cal');
+  let sx = 0, sy = 0, tracking = false;
+  calView.addEventListener('touchstart', (e)=>{
+    // グラフ内の横スクロール操作は月送りに使わない
+    if(e.touches.length !== 1 || e.target.closest('.chart-scroll')){ tracking = false; return; }
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    tracking = true;
+  }, {passive:true});
+  calView.addEventListener('touchend', (e)=>{
+    if(!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if(Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    shiftCalMonth(dx < 0 ? 1 : -1); // 左スワイプで翌月、右スワイプで前月
+  }, {passive:true});
+})();
 
 /* ---------- MEMO ---------- */
 function renderMemoView(){
