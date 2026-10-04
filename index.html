@@ -210,6 +210,17 @@
   }
   .memo-item .memo-date{font-size:16px;color:var(--sub);margin-bottom:4px;font-weight:600;}
   .memo-item .memo-text{font-size:16px;color:var(--text-card);white-space:pre-wrap;line-height:1.5;}
+  .memo-tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .memo-tabs button{
+    flex:1;padding:10px 0;border-radius:12px;background:var(--card);border:1px solid var(--border);
+    color:var(--sub);font-size:16px;font-weight:600;
+  }
+  .memo-tabs button.active{color:var(--accent);border-color:var(--accent);}
+  .memo-add-btn{
+    width:100%;padding:12px;border-radius:12px;background:var(--card2);border:1px solid var(--border);
+    color:var(--text-card);font-size:16px;font-weight:600;margin-bottom:12px;
+  }
+  .modal .btns .del{background:var(--card2);color:var(--danger);}
 
   /* settings */
   .field{margin-bottom:16px;}
@@ -326,8 +337,17 @@
 
     <!-- MEMO -->
     <section class="view" id="view-memo">
-      <div class="section-title">メモ一覧</div>
-      <div id="memoList"></div>
+      <div class="memo-tabs">
+        <button id="memoTabCal" class="active">カレンダーメモ</button>
+        <button id="memoTabPrivate">プライベートメモ</button>
+      </div>
+      <div id="memoCalWrap">
+        <div id="memoList"></div>
+      </div>
+      <div id="memoPrivateWrap" style="display:none;">
+        <button class="memo-add-btn" id="privateMemoAdd">＋ 新規メモ</button>
+        <div id="privateMemoList"></div>
+      </div>
     </section>
 
     <!-- STATS -->
@@ -488,6 +508,19 @@
   </div>
 </div>
 
+<!-- private memo modal (not linked to calendar) -->
+<div class="modal-bg" id="pmModalBg">
+  <div class="modal">
+    <button class="close-x" id="pmModalClose">✕</button>
+    <h3 id="pmModalTitle">プライベートメモ</h3>
+    <textarea id="pmInput" placeholder="メモを入力" style="min-height:140px;"></textarea>
+    <div class="btns">
+      <button class="del" id="pmDelete">削除</button>
+      <button class="save" id="pmSave">保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const STORAGE_KEY = 'smokeTrackerData_v1';
 
@@ -531,10 +564,11 @@ function loadData(){
       if(typeof d.theme !== 'string') d.theme = 'dark';
       if(typeof d.premium !== 'boolean') d.premium = false;
       if(typeof d.licenseKey !== 'string') d.licenseKey = '';
+      if(!Array.isArray(d.privateMemos)) d.privateMemos = [];
       return d;
     }
   }catch(e){}
-  return { packSize: 20, days: {}, activePackSize: null, activePackTaps: 0, dailyGoal: 20, dayStartHour: 0, pricePerPack: 0, theme: 'dark', premium: false, licenseKey: '' };
+  return { packSize: 20, days: {}, activePackSize: null, activePackTaps: 0, dailyGoal: 20, dayStartHour: 0, pricePerPack: 0, theme: 'dark', premium: false, licenseKey: '', privateMemos: [] };
 }
 function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
@@ -1357,7 +1391,84 @@ function shiftCalMonth(delta){
 })();
 
 /* ---------- MEMO ---------- */
+let memoTab = 'cal';
+let editingPrivateId = null;
+
+function setMemoTab(tab){
+  memoTab = tab;
+  document.getElementById('memoTabCal').classList.toggle('active', tab === 'cal');
+  document.getElementById('memoTabPrivate').classList.toggle('active', tab === 'private');
+  document.getElementById('memoCalWrap').style.display = tab === 'cal' ? '' : 'none';
+  document.getElementById('memoPrivateWrap').style.display = tab === 'private' ? '' : 'none';
+  renderMemoView();
+}
+document.getElementById('memoTabCal').addEventListener('click', ()=> setMemoTab('cal'));
+document.getElementById('memoTabPrivate').addEventListener('click', ()=> setMemoTab('private'));
+
+function renderPrivateMemos(){
+  const listEl = document.getElementById('privateMemoList');
+  const memos = (data.privateMemos || []).slice().sort((a,b)=> b.updated - a.updated);
+  if(memos.length === 0){
+    listEl.innerHTML = '<div class="check-line">まだプライベートメモがありません。</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  memos.forEach(pm=>{
+    const item = document.createElement('div');
+    item.className = 'memo-item';
+    const textEl = document.createElement('div');
+    textEl.className = 'memo-text';
+    textEl.textContent = pm.text;
+    item.appendChild(textEl);
+    item.addEventListener('click', ()=> openPrivateMemoModal(pm.id));
+    listEl.appendChild(item);
+  });
+}
+
+function openPrivateMemoModal(id){
+  editingPrivateId = id;
+  const pm = id ? data.privateMemos.find(m => m.id === id) : null;
+  document.getElementById('pmModalTitle').textContent = pm ? 'メモを編集' : '新規メモ';
+  document.getElementById('pmInput').value = pm ? pm.text : '';
+  document.getElementById('pmDelete').style.display = pm ? '' : 'none';
+  document.getElementById('pmModalBg').classList.add('show');
+}
+function closePrivateMemoModal(){
+  document.getElementById('pmModalBg').classList.remove('show');
+  editingPrivateId = null;
+}
+document.getElementById('privateMemoAdd').addEventListener('click', ()=> openPrivateMemoModal(null));
+document.getElementById('pmModalClose').addEventListener('click', closePrivateMemoModal);
+document.getElementById('pmModalBg').addEventListener('click', (e)=>{
+  if(e.target.id === 'pmModalBg') closePrivateMemoModal();
+});
+document.getElementById('pmSave').addEventListener('click', ()=>{
+  const text = document.getElementById('pmInput').value.trim();
+  const now = Date.now();
+  if(editingPrivateId){
+    const pm = data.privateMemos.find(m => m.id === editingPrivateId);
+    if(pm){
+      if(text === ''){ data.privateMemos = data.privateMemos.filter(m => m.id !== editingPrivateId); }
+      else if(pm.text !== text){ pm.text = text; pm.updated = now; }
+    }
+  } else if(text !== ''){
+    data.privateMemos.push({ id: 'pm' + now + Math.random().toString(36).slice(2,6), text, created: now, updated: now });
+  }
+  saveData();
+  closePrivateMemoModal();
+  renderPrivateMemos();
+});
+document.getElementById('pmDelete').addEventListener('click', ()=>{
+  if(!editingPrivateId) return;
+  if(!confirm('このメモを削除しますか？(元に戻せません)')) return;
+  data.privateMemos = data.privateMemos.filter(m => m.id !== editingPrivateId);
+  saveData();
+  closePrivateMemoModal();
+  renderPrivateMemos();
+});
+
 function renderMemoView(){
+  if(memoTab === 'private'){ renderPrivateMemos(); return; }
   const listEl = document.getElementById('memoList');
   const keys = Object.keys(data.days)
     .filter(k => data.days[k].memo && data.days[k].memo.trim().length > 0)
@@ -1376,6 +1487,13 @@ function renderMemoView(){
     const dateEl = document.createElement('div');
     dateEl.className = 'memo-date';
     dateEl.textContent = `${y}年${m}月${d}日`;
+    if(rec.count !== null && rec.count !== undefined){
+      const countEl = document.createElement('span');
+      const isOver = data.dailyGoal > 0 && rec.count > data.dailyGoal;
+      countEl.style.cssText = `margin-left:12px;color:${isOver ? 'var(--danger)' : 'var(--text-card)'};`;
+      countEl.textContent = `${rec.count}本`;
+      dateEl.appendChild(countEl);
+    }
     const textEl = document.createElement('div');
     textEl.className = 'memo-text';
     textEl.textContent = rec.memo;
