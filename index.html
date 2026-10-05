@@ -93,7 +93,10 @@
   .last-touch-card{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 20px;}
   .last-touch-label{position:absolute;left:20px;color:var(--danger);font-size:18px;letter-spacing:.04em;text-transform:lowercase;}
   .last-touch-time{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
-  .tap-card{position:relative;min-height:270px;}
+  .brand-logo{background:none;border-top:0;border-left:0;border-right:0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:baseline;justify-content:center;width:fit-content;margin:28px auto 8px;padding:0 2px 4px;border-bottom:1px solid var(--border);font-family:Arial,Helvetica,sans-serif;font-weight:700;line-height:1;}
+  .brand-logo .bl-t{font-size:34px;color:#a62b2e;margin-right:3px;}
+  .brand-logo .bl-s{font-size:22px;letter-spacing:.22em;color:var(--text-card);opacity:.85;}
+  .last-touch-sw{position:absolute;right:20px;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);}  .tap-card{position:relative;min-height:270px;}
   .tap-wrap{position:relative;margin-top:-8px;width:187px;height:187px;}
   .adjust-btn{
     position:absolute;top:169px;width:70px;height:70px;border-radius:50%;
@@ -216,6 +219,10 @@
     color:var(--sub);font-size:16px;font-weight:600;
   }
   .memo-tabs button.active{color:var(--accent);border-color:var(--accent);}
+  .pm-item{display:flex;gap:12px;align-items:flex-start;}
+  .pm-item .memo-text{flex:1;min-width:0;}
+  .pm-handle{font-size:22px;line-height:1.2;color:var(--sub);touch-action:none;cursor:grab;padding:0 4px;user-select:none;-webkit-user-select:none;}
+  .pm-item.dragging{opacity:.65;border-color:var(--accent);}
   .memo-add-btn{
     width:100%;padding:12px;border-radius:12px;background:var(--card2);border:1px solid var(--border);
     color:var(--text-card);font-size:16px;font-weight:600;margin-bottom:12px;
@@ -321,8 +328,8 @@
       <div class="card last-touch-card">
         <div class="last-touch-label">last touch</div>
         <div class="last-touch-time" id="lastTouchTime">－－:－－</div>
-      </div>
-    </section>
+        <div class="last-touch-sw" id="lastTouchStopwatch">00:00:00</div>
+      </div>    </section>
 
     <!-- CALENDAR -->
     <section class="view" id="view-cal">
@@ -461,6 +468,7 @@
         </div>
         <input type="file" id="backupImportInput" accept="application/json,.json" style="display:none;">
       </div>
+      <button type="button" class="brand-logo" id="brandLogoBtn" aria-label="T-SEARCH"><span class="bl-t">T</span><span class="bl-s">-SEARCH</span></button>
     </section>
   </main>
 
@@ -566,6 +574,11 @@ function loadData(){
       if(typeof d.premium !== 'boolean') d.premium = false;
       if(typeof d.licenseKey !== 'string') d.licenseKey = '';
       if(!Array.isArray(d.privateMemos)) d.privateMemos = [];
+      if(!d.privateMemosManual){
+        // 手動並べ替え導入時の移行: これまで表示していた「更新が新しい順」を初期の並びとして固定する
+        d.privateMemos.sort((a,b)=> b.updated - a.updated);
+        d.privateMemosManual = true;
+      }
       return d;
     }
   }catch(e){}
@@ -651,6 +664,40 @@ function finishPackAndRefill(day){
   day.currentRemaining = data.packSize;
 }
 
+/* ---------- LAST TOUCH / STOPWATCH ---------- */
+function getLastTouchISO(day, key){
+  let src = day.lastTouch;
+  if(!src){
+    // today has no touch yet -- fall back to the most recent past day's
+    // last touch, so the panel doesn't blank out at the start of each day.
+    const pastTouchKeys = Object.keys(data.days)
+      .filter(k => k < key && data.days[k].lastTouch)
+      .sort();
+    if(pastTouchKeys.length){
+      src = data.days[pastTouchKeys[pastTouchKeys.length-1]].lastTouch;
+    }
+  }
+  return src || null;
+}
+function fmtHMS(ms){
+  const total = Math.max(Math.floor(ms / 1000), 0);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+// タップ・取り消し(−)・RESETのたびに呼ぶ: last touchを更新(=ストップウォッチ再始動)
+function touchNow(day){
+  day.lastTouch = new Date().toISOString();
+}
+function updateStopwatch(){
+  const el = document.getElementById('lastTouchStopwatch');
+  if(!el) return;
+  const src = getLastTouchISO(ensureToday(), todayKey());
+  el.textContent = src ? fmtHMS(Date.now() - new Date(src)) : '00:00:00';
+}
+setInterval(updateStopwatch, 1000);
+
 /* ---------- HOME RENDER ---------- */
 function renderHome(){
   const key = todayKey();
@@ -660,17 +707,8 @@ function renderHome(){
   document.getElementById('todayCount').textContent = day.count;
   document.getElementById('tapBtnCount').textContent = day.count;
   const lastTouchEl = document.getElementById('lastTouchTime');
-  let lastTouchSource = day.lastTouch;
-  if(!lastTouchSource){
-    // today has no touch yet -- fall back to the most recent past day's
-    // last touch, so the panel doesn't blank out at the start of each day.
-    const pastTouchKeys = Object.keys(data.days)
-      .filter(k => k < key && data.days[k].lastTouch)
-      .sort();
-    if(pastTouchKeys.length){
-      lastTouchSource = data.days[pastTouchKeys[pastTouchKeys.length-1]].lastTouch;
-    }
-  }
+  const lastTouchSource = getLastTouchISO(day, key);
+  updateStopwatch();
   if(lastTouchSource){
     const t = new Date(lastTouchSource);
     lastTouchEl.textContent = `${pad(t.getHours())}:${pad(t.getMinutes())}`;
@@ -756,7 +794,7 @@ function doTap(withEffect){
     finishPackAndRefill(day);
   }
   day.taps.push(new Date().toISOString());
-  day.lastTouch = new Date().toISOString();
+  touchNow(day);
   saveData();
   renderHome();
   if(document.getElementById('view-cal').classList.contains('active')) renderCalendar();
@@ -781,7 +819,7 @@ function doUndo(){
     return;
   }
   day.taps.pop();
-  day.lastTouch = new Date().toISOString();
+  touchNow(day);
   saveData();
   renderHome();
   if(document.getElementById('view-cal').classList.contains('active')) renderCalendar();
@@ -850,7 +888,7 @@ document.getElementById('startModalSave').addEventListener('click', ()=>{
   day.currentRemaining = newRemain;
   day.count = todayCount;
   day.taps = [];
-  day.lastTouch = new Date().toISOString();
+  touchNow(day);
   saveData();
   closeStartModal();
   renderHome();
@@ -922,9 +960,11 @@ function renderCalendar(){
   if(monthKeys.length){
     const counts = monthKeys.map(k => data.days[k].count);
     const maxC = Math.max(...counts);
-    const minC = Math.min(...counts);
+    // 当日はまだ増える途中なので、最小本数の対象から除外する
+    const minTargets = monthKeys.filter(k => k !== todayKey()).map(k => data.days[k].count);
+    const minText = minTargets.length ? `${Math.min(...minTargets)}本` : '-';
     const maxColor = (data.dailyGoal > 0 && maxC > data.dailyGoal) ? 'var(--danger)' : 'var(--text-card)';
-    statsHtml += `<br>月間最大本数 <b><span style="color:${maxColor}">${maxC}</span>本</b>　月間最小本数 <b>${minC}本</b>`;
+    statsHtml += `<br>月間最大本数 <b><span style="color:${maxColor}">${maxC}</span>本</b>　月間最小本数 <b>${minText}</b>`;
   } else {
     statsHtml += `<br>月間最大本数 <b>-</b>　月間最小本数 <b>-</b>`;
   }
@@ -1236,10 +1276,12 @@ function computeMinMaxDay(){
     .filter(k => data.days[k].count !== null && data.days[k].count !== undefined)
     .sort();
   let maxCount = null, maxKey = null, minCount = null, minKey = null;
+  const tKey = todayKey();
   keys.forEach(k => {
     const c = data.days[k].count;
     if(maxCount === null || c > maxCount){ maxCount = c; maxKey = k; }
-    if(minCount === null || c < minCount){ minCount = c; minKey = k; }
+    // 当日はまだ増える途中なので、最小本数の対象から除外する
+    if(k !== tKey && (minCount === null || c < minCount)){ minCount = c; minKey = k; }
   });
   return { maxCount, maxKey, minCount, minKey };
 }
@@ -1429,21 +1471,60 @@ document.getElementById('memoTabPrivate').addEventListener('click', ()=> setMemo
 
 function renderPrivateMemos(){
   const listEl = document.getElementById('privateMemoList');
-  const memos = (data.privateMemos || []).slice().sort((a,b)=> b.updated - a.updated);
-  if(memos.length === 0){
-    listEl.innerHTML = '';
-    return;
-  }
+  const memos = data.privateMemos || [];
   listEl.innerHTML = '';
+  if(memos.length === 0) return;
   memos.forEach(pm=>{
     const item = document.createElement('div');
-    item.className = 'memo-item';
+    item.className = 'memo-item pm-item';
+    item.dataset.id = pm.id;
     const textEl = document.createElement('div');
     textEl.className = 'memo-text';
     textEl.textContent = pm.text;
+    const handle = document.createElement('span');
+    handle.className = 'pm-handle';
+    handle.textContent = '≡';
     item.appendChild(textEl);
-    item.addEventListener('click', ()=> openPrivateMemoModal(pm.id));
+    item.appendChild(handle);
+    item.addEventListener('click', (e)=>{
+      if(e.target.closest('.pm-handle')) return;
+      openPrivateMemoModal(pm.id);
+    });
+    attachPrivateMemoDrag(handle, item, listEl);
     listEl.appendChild(item);
+  });
+}
+
+// ≡ ハンドルを掴んで上下にドラッグして並べ替え(指でもマウスでも可)
+function attachPrivateMemoDrag(handle, item, listEl){
+  handle.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+    item.classList.add('dragging');
+    const onMove = (ev)=>{
+      const y = ev.clientY;
+      let before = null;
+      for(const s of listEl.children){
+        if(s === item) continue;
+        const r = s.getBoundingClientRect();
+        if(y < r.top + r.height / 2){ before = s; break; }
+      }
+      if(before) listEl.insertBefore(item, before); else listEl.appendChild(item);
+      if(y < 90) window.scrollBy(0, -14);
+      else if(y > window.innerHeight - 130) window.scrollBy(0, 14);
+    };
+    const onEnd = ()=>{
+      handle.removeEventListener('pointermove', onMove);
+      handle.removeEventListener('pointerup', onEnd);
+      handle.removeEventListener('pointercancel', onEnd);
+      item.classList.remove('dragging');
+      const ids = [...listEl.children].map(c => c.dataset.id);
+      data.privateMemos = ids.map(id => data.privateMemos.find(m => m.id === id)).filter(Boolean);
+      saveData();
+    };
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onEnd);
+    handle.addEventListener('pointercancel', onEnd);
   });
 }
 
@@ -1474,7 +1555,7 @@ document.getElementById('pmSave').addEventListener('click', ()=>{
       else if(pm.text !== text){ pm.text = text; pm.updated = now; }
     }
   } else if(text !== ''){
-    data.privateMemos.push({ id: 'pm' + now + Math.random().toString(36).slice(2,6), text, created: now, updated: now });
+    data.privateMemos.unshift({ id: 'pm' + now + Math.random().toString(36).slice(2,6), text, created: now, updated: now });
   }
   saveData();
   closePrivateMemoModal();
