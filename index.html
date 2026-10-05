@@ -34,12 +34,12 @@
     background:var(--bg);
     color:var(--text);
     overscroll-behavior:none;
-    padding-top:calc(env(safe-area-inset-top) + 10px);
+    padding-top:env(safe-area-inset-top);
     padding-bottom:env(safe-area-inset-bottom);
   }
   #app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
   header{
-    padding:18px 20px 10px;
+    padding:8px 20px 10px;
     display:flex;align-items:center;justify-content:space-between;
   }
   header h1{font-size:18px;margin:0;font-weight:600;letter-spacing:.02em;display:flex;align-items:center;gap:8px;}
@@ -95,7 +95,7 @@
   .last-touch-time{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
   .brand-logo{background:none;border-top:0;border-left:0;border-right:0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:baseline;justify-content:center;width:fit-content;margin:28px auto 8px;padding:0 2px 4px;border-bottom:1px solid var(--border);font-family:Arial,Helvetica,sans-serif;font-weight:700;line-height:1;}
   .brand-logo .bl-t{font-size:34px;color:#a62b2e;margin-right:3px;}
-  .brand-logo .bl-s{font-size:22px;letter-spacing:.22em;color:var(--text-card);opacity:.85;}
+  .brand-logo .bl-s{font-size:22px;letter-spacing:.22em;color:var(--text);opacity:.85;}
   .last-touch-sw{position:absolute;right:20px;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);}  .tap-card{position:relative;min-height:270px;}
   .tap-wrap{position:relative;margin-top:-8px;width:187px;height:187px;}
   .adjust-btn{
@@ -221,7 +221,7 @@
   .memo-tabs button.active{color:var(--accent);border-color:var(--accent);}
   .pm-item{display:flex;gap:12px;align-items:flex-start;}
   .pm-item .memo-text{flex:1;min-width:0;}
-  .pm-handle{font-size:22px;line-height:1.2;color:var(--sub);touch-action:none;cursor:grab;padding:0 4px;user-select:none;-webkit-user-select:none;}
+  .pm-handle{font-size:26px;line-height:1.2;color:var(--sub);touch-action:none;cursor:grab;padding:0 10px;margin:-4px -6px -4px 0;user-select:none;-webkit-user-select:none;}
   .pm-item.dragging{opacity:.65;border-color:var(--accent);}
   .memo-add-btn{
     width:100%;padding:12px;border-radius:12px;background:var(--card2);border:1px solid var(--border);
@@ -962,9 +962,9 @@ function renderCalendar(){
     const maxC = Math.max(...counts);
     // 当日はまだ増える途中なので、最小本数の対象から除外する
     const minTargets = monthKeys.filter(k => k !== todayKey()).map(k => data.days[k].count);
-    const minText = minTargets.length ? `${Math.min(...minTargets)}本` : '-';
+    const minText = minTargets.length ? `${Math.min(...minTargets)}` : '-';
     const maxColor = (data.dailyGoal > 0 && maxC > data.dailyGoal) ? 'var(--danger)' : 'var(--text-card)';
-    statsHtml += `<br>月間最大本数 <b><span style="color:${maxColor}">${maxC}</span>本</b>　月間最小本数 <b>${minText}</b>`;
+    statsHtml += `<br>月間最大本数 <b><span style="color:${maxColor}">${maxC}</span></b>本　月間最小本数 <b>${minText}</b>${minTargets.length ? '本' : ''}`;
   } else {
     statsHtml += `<br>月間最大本数 <b>-</b>　月間最小本数 <b>-</b>`;
   }
@@ -1497,27 +1497,56 @@ function renderPrivateMemos(){
 
 // ≡ ハンドルを掴んで上下にドラッグして並べ替え(指でもマウスでも可)
 function attachPrivateMemoDrag(handle, item, listEl){
+  // ドラッグ中はDOMを動かさず(動かすとiOSでポインタが途切れる)、指に合わせて見た目だけ移動。離した位置で並べ替える
   handle.addEventListener('pointerdown', (e)=>{
     e.preventDefault();
-    handle.setPointerCapture(e.pointerId);
+    const startY = e.clientY;
+    const pid = e.pointerId;
+    try{ handle.setPointerCapture(pid); }catch(_){}
     item.classList.add('dragging');
-    const onMove = (ev)=>{
-      const y = ev.clientY;
-      let before = null;
-      for(const s of listEl.children){
-        if(s === item) continue;
-        const r = s.getBoundingClientRect();
-        if(y < r.top + r.height / 2){ before = s; break; }
+    item.style.position = 'relative';
+    item.style.zIndex = '5';
+    let lastY = startY, scrollDelta = 0, timer = null;
+    const others = ()=> [...listEl.children].filter(c => c !== item);
+    const calcBefore = ()=>{
+      const r = item.getBoundingClientRect();
+      const cy = r.top + r.height / 2;
+      for(const s of others()){
+        const sr = s.getBoundingClientRect();
+        if(cy < sr.top + sr.height / 2) return s;
       }
-      if(before) listEl.insertBefore(item, before); else listEl.appendChild(item);
-      if(y < 90) window.scrollBy(0, -14);
-      else if(y > window.innerHeight - 130) window.scrollBy(0, 14);
+      return null;
     };
-    const onEnd = ()=>{
+    const mark = ()=>{
+      others().forEach(s => { s.style.boxShadow = ''; });
+      const bf = calcBefore();
+      if(bf) bf.style.boxShadow = '0 -3px 0 0 var(--accent)';
+      else { const o = others(); if(o.length) o[o.length-1].style.boxShadow = '0 3px 0 0 var(--accent)'; }
+    };
+    const apply = ()=>{ item.style.transform = 'translateY(' + (lastY - startY + scrollDelta) + 'px)'; mark(); };
+    const onMove = (ev)=>{
+      if(ev.pointerId !== pid) return;
+      lastY = ev.clientY;
+      apply();
+      clearInterval(timer); timer = null;
+      let dy = 0;
+      if(lastY < 90) dy = -10; else if(lastY > window.innerHeight - 130) dy = 10;
+      if(dy){
+        const sc = listEl.closest('main') || document.scrollingElement;
+        timer = setInterval(()=>{ const before = sc.scrollTop; sc.scrollTop += dy; scrollDelta += (sc.scrollTop - before); apply(); }, 16);
+      }
+    };
+    const onEnd = (ev)=>{
+      if(ev && ev.pointerId !== pid) return;
+      clearInterval(timer);
       handle.removeEventListener('pointermove', onMove);
       handle.removeEventListener('pointerup', onEnd);
       handle.removeEventListener('pointercancel', onEnd);
+      const bf = calcBefore();
+      others().forEach(s => { s.style.boxShadow = ''; });
       item.classList.remove('dragging');
+      item.style.transform = ''; item.style.position = ''; item.style.zIndex = '';
+      if(bf) listEl.insertBefore(item, bf); else listEl.appendChild(item);
       const ids = [...listEl.children].map(c => c.dataset.id);
       data.privateMemos = ids.map(id => data.privateMemos.find(m => m.id === id)).filter(Boolean);
       saveData();
