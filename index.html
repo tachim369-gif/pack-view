@@ -503,7 +503,8 @@
     <label style="display:block;font-size:16px;color:var(--sub);margin-bottom:8px;">メモ</label>
     <textarea id="dayMemoInput" placeholder="メモを入力"></textarea>
     <div class="btns">
-      <button class="save" id="dayCountSave" style="width:100%;">保存</button>
+      <button class="del" id="dayMemoDelete" style="display:none;">削除</button>
+      <button class="save" id="dayCountSave">保存</button>
     </div>
   </div>
 </div>
@@ -918,7 +919,6 @@ function renderCalendar(){
     const achievedCount = monthKeys.filter(k => data.days[k].count <= data.dailyGoal).length;
     statsHtml += `　達成日数 <b>${achievedCount}</b>日`;
   }
-  statsHtml += `<br>月間合計 <b>${total}</b>本/月　月間平均 <b>${avg}</b>本/日`;
   if(monthKeys.length){
     const counts = monthKeys.map(k => data.days[k].count);
     const maxC = Math.max(...counts);
@@ -928,6 +928,7 @@ function renderCalendar(){
   } else {
     statsHtml += `<br>月間最大本数 <b>-</b>　月間最小本数 <b>-</b>`;
   }
+  statsHtml += `<br>月間合計 <b>${total}</b>本/月　月間平均 <b>${avg}</b>本/日`;
   if(data.pricePerPack > 0){
     const costPerCig = data.pricePerPack / 20;
     const monthCost = Math.round(total * costPerCig);
@@ -1296,15 +1297,18 @@ function renderTotalsCard(){
 
 let currentModalDayKey = null;
 let currentModalIsFuture = false;
-function showDayModal(key, dt){
+function showDayModal(key, dt, opts){
   currentModalDayKey = key;
   const tKey = todayKey();
   currentModalIsFuture = key > tKey;
   const isToday = key === tKey;
-  const hideCount = currentModalIsFuture || isToday;
+  // メモ一覧から開いた場合は本数欄を出さない(入力済みの本数は内部で保持され、保存時も変わらない)
+  const hideCount = currentModalIsFuture || isToday || !!(opts && opts.hideCount);
   const rec = data.days[key];
   document.getElementById('dayModalTitle').textContent = `${dt.getMonth()+1}月${dt.getDate()}日`;
   document.getElementById('dayCountField').style.display = hideCount ? 'none' : '';
+  // メモ一覧から開いた場合のみ「メモを削除」を表示(本数は削除されない)
+  document.getElementById('dayMemoDelete').style.display = (opts && opts.hideCount) ? '' : 'none';
   document.getElementById('dayCountInput').value = (rec && rec.count !== null && rec.count !== undefined) ? rec.count : '';
   document.getElementById('dayMemoInput').value = rec && rec.memo ? rec.memo : '';
   document.getElementById('dayModalBg').classList.add('show');
@@ -1349,6 +1353,24 @@ document.getElementById('dayCountSave').addEventListener('click', ()=>{
         rec.count = isNaN(v) ? rec.count : Math.max(v, 0);
       }
       rec.memo = memoVal;
+    }
+  }
+  saveData();
+  document.getElementById('dayModalBg').classList.remove('show');
+  renderCalendar();
+  renderHome();
+  if(document.getElementById('view-memo').classList.contains('active')) renderMemoView();
+});
+document.getElementById('dayMemoDelete').addEventListener('click', ()=>{
+  if(!currentModalDayKey) return;
+  if(!confirm('このメモを削除しますか？(本数は残ります。元に戻せません)')) return;
+  const rec = data.days[currentModalDayKey];
+  if(rec){
+    const noCount = rec.count === null || rec.count === undefined;
+    if(noCount && currentModalDayKey !== todayKey()){
+      delete data.days[currentModalDayKey]; // メモしか無い日は記録ごと消す
+    } else {
+      rec.memo = '';
     }
   }
   saveData();
@@ -1409,7 +1431,7 @@ function renderPrivateMemos(){
   const listEl = document.getElementById('privateMemoList');
   const memos = (data.privateMemos || []).slice().sort((a,b)=> b.updated - a.updated);
   if(memos.length === 0){
-    listEl.innerHTML = '<div class="check-line">まだプライベートメモがありません。</div>';
+    listEl.innerHTML = '';
     return;
   }
   listEl.innerHTML = '';
@@ -1500,7 +1522,7 @@ function renderMemoView(){
     item.appendChild(dateEl);
     item.appendChild(textEl);
     item.addEventListener('click', ()=>{
-      showDayModal(key, new Date(y, m-1, d));
+      showDayModal(key, new Date(y, m-1, d), { hideCount: true });
     });
     listEl.appendChild(item);
   });
