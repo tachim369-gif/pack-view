@@ -93,7 +93,7 @@
   .last-touch-card{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 20px;}
   .last-touch-label{position:absolute;left:20px;color:var(--danger);font-size:18px;letter-spacing:.04em;text-transform:lowercase;}
   .last-touch-time{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
-  .brand-logo{background:none;border-top:0;border-left:0;border-right:0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:baseline;justify-content:center;width:fit-content;margin:28px auto 8px;padding:0 2px 4px;border-bottom:1px solid var(--border);font-family:Arial,Helvetica,sans-serif;font-weight:700;line-height:1;}
+  .brand-logo{background:none;border-top:0;border-left:0;border-right:0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:baseline;justify-content:center;width:fit-content;margin:38px auto 8px;padding:0 2px 4px;border-bottom:1px solid var(--border);font-family:Arial,Helvetica,sans-serif;font-weight:700;line-height:1;}
   .brand-logo .bl-t{font-size:34px;color:#a62b2e;margin-right:3px;}
   .brand-logo .bl-s{font-size:22px;letter-spacing:.22em;color:var(--text);opacity:.85;}
   .last-touch-sw{position:absolute;right:20px;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);}  .tap-card{position:relative;min-height:267px;}
@@ -204,7 +204,7 @@
   .cal-cell.today{border-color:var(--accent);}
   .cal-cell .memo-dot{position:absolute;bottom:5px;right:7px;width:5px;height:5px;border-radius:50%;background:var(--accent);}
   .cal-cell.over-goal .c{color:var(--danger);}
-  .cal-stats{font-size:16px;color:var(--sub);margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+  .cal-stats{font-size:16px;color:var(--sub);margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
   .cal-stats b{color:var(--text-card);font-size:16px;}
 
   /* memo */
@@ -385,8 +385,8 @@
         <div class="section-title" style="margin:0 0 10px">記録</div>
         <div class="check-line">一日最大本数 <b id="statsMaxDay">0</b>本 <span id="statsMaxDayDate"></span></div>
         <div class="check-line">一日最小本数 <b id="statsMinDay">0</b>本 <span id="statsMinDayDate"></span></div>
-        <div class="check-line">目標本数以下の連続日数 <b id="statsAchieveStreak">0</b>日 <span id="statsAchieveRange"></span></div>
-        <div class="check-line">目標本数超過の連続日数 <b id="statsOverStreak" style="color:var(--danger)">0</b>日 <span id="statsOverRange"></span></div>
+        <div class="check-line">目標達成の連続日数 <b id="statsAchieveStreak">0</b>日 <span id="statsAchieveRange"></span></div>
+        <div class="check-line">目標超過の連続日数 <b id="statsOverStreak" style="color:var(--danger)">0</b>日 <span id="statsOverRange"></span></div>
         <div class="check-line">0本(禁煙)の連続日数 <b id="statsZeroStreak">0</b>日 <span id="statsZeroRange"></span></div>
       </div>
       </div>
@@ -1292,8 +1292,8 @@ function computeMinMaxDay(){
 
 function formatStreakRange(startKey, endKey){
   if(!startKey || !endKey) return '';
-  const fmt = k => { const [y,m,d] = k.split('-'); return `${Number(m)}/${Number(d)}`; };
-  return startKey === endKey ? `(${fmt(startKey)})` : `(${fmt(startKey)}〜${fmt(endKey)})`;
+  const [y,m,d] = startKey.split('-');
+  return `(${Number(y)}/${Number(m)}/${Number(d)}〜)`;
 }
 
 function renderStatsView(){
@@ -1312,7 +1312,7 @@ function renderStatsView(){
   document.getElementById('statsOverRange').textContent = formatStreakRange(overStart, overEnd);
   document.getElementById('statsZeroRange').textContent = formatStreakRange(zeroStart, zeroEnd);
   const { maxCount, maxKey, minCount, minKey } = computeMinMaxDay();
-  const fmtDay = k => { if(!k) return ''; const [y,m,d] = k.split('-'); return `(${Number(m)}/${Number(d)})`; };
+  const fmtDay = k => { if(!k) return ''; const [y,m,d] = k.split('-'); return `(${Number(y)}/${Number(m)}/${Number(d)})`; };
   const maxEl = document.getElementById('statsMaxDay');
   maxEl.textContent = maxCount === null ? '-' : maxCount;
   maxEl.style.color = (data.dailyGoal > 0 && maxCount !== null && maxCount > data.dailyGoal) ? 'var(--danger)' : '';
