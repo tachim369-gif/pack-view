@@ -1849,6 +1849,11 @@ function switchView(view){
   if(view === 'stats') renderStatsView();
   if(view === 'settings') renderSettings();
   if(view === 'home') renderHome();
+  // 画面を切り替えたら、前の画面のスクロール位置を引き継がず先頭から表示する
+  const mainEl = document.querySelector('main'); if(mainEl) mainEl.scrollTop = 0;
+  window.scrollTo(0, 0);
+  document.body.scrollTop = 0; document.documentElement.scrollTop = 0;
+  const appEl = document.getElementById('app'); if(appEl) appEl.scrollTop = 0;
 }
 document.querySelectorAll('.navbtn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
