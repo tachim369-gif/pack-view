@@ -1,8 +1,8 @@
-const CACHE = 'packview-v177';
+const CACHE = 'packview-v179';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.png'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(()=>{}));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u, {cache: 'reload'})))).catch(()=>{}));
   self.skipWaiting();
 });
 

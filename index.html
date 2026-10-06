@@ -1611,7 +1611,7 @@ function renderMemoView(){
     .sort()
     .reverse();
   if(keys.length === 0){
-    listEl.innerHTML = '<div class="check-line">まだメモがありません。</div>';
+    listEl.innerHTML = '';
     return;
   }
   listEl.innerHTML = '';
@@ -1878,7 +1878,21 @@ renderSettings();
 /* register service worker for installability */
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.register('sw.js').then(reg=>{ try{ reg.update(); }catch(_){} }).catch(()=>{});
+  });
+  // 新しい版に切り替わったら、起動直後(15秒以内)に限って1回だけ自動で読み込み直す。
+  // (使用中の入力を邪魔しないため。短時間に何度も繰り返さないよう制限あり)
+  const hadController = !!navigator.serviceWorker.controller;
+  let swReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+    if(!hadController || swReloaded) return;
+    if(performance.now() > 15000) return;
+    let last = 0;
+    try{ last = Number(sessionStorage.getItem('pvSwReload') || 0); }catch(_){}
+    if(Date.now() - last < 60000) return;
+    swReloaded = true;
+    try{ sessionStorage.setItem('pvSwReload', String(Date.now())); }catch(_){}
+    location.reload();
   });
 }
 </script>
