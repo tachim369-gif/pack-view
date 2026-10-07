@@ -217,10 +217,11 @@
   .memo-tabs{display:flex;gap:8px;margin-bottom:14px;position:relative;}
   .memo-tabs button{
     flex:1;padding:10px 0;border-radius:12px;background:var(--card);border:1px solid var(--border);
-    color:var(--sub);font-size:16px;font-weight:600;
+    color:var(--sub);font-size:14px;font-weight:600;white-space:nowrap;
   }
+  #memoTabPrivate{text-indent:-12px;}
   .memo-tabs button.active{color:var(--accent);border-color:var(--accent);}
-  .memo-tabs button.memo-plus{position:absolute;right:6px;top:50%;transform:translateY(-50%);flex:none;width:30px;height:30px;padding:0;border-radius:8px;font-size:20px;line-height:1;font-weight:700;color:var(--accent);background:var(--card2);border:1px solid var(--accent);cursor:pointer;}
+  .memo-tabs button.memo-plus{position:absolute;right:4px;top:50%;transform:translateY(-50%);flex:none;width:22px;height:22px;padding:0;border-radius:7px;font-size:16px;line-height:1;font-weight:700;color:var(--accent);background:var(--card2);border:1px solid var(--accent);cursor:pointer;}
   .pm-item{display:flex;gap:12px;align-items:flex-start;}
   .pm-item .memo-text{flex:1;min-width:0;}
   .pm-handle{font-size:26px;line-height:1.2;color:var(--sub);touch-action:none;cursor:grab;padding:0 10px;margin:-4px -6px -4px 0;user-select:none;-webkit-user-select:none;}
