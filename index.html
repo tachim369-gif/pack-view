@@ -262,6 +262,8 @@
   }
   nav button .ic{font-size:20px;}
   nav button.active{color:var(--accent);}
+  nav button.guide-slot{visibility:hidden;}
+  nav button.guide-slot.show{visibility:visible;}
 
   .modal-bg{
     position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;
@@ -290,9 +292,6 @@
   .modal .btns .cancel{background:var(--card2);color:var(--text-card);}
   .modal .btns .save{background:var(--accent);color:#08202f;}
   .intro-body{font-size:15px;line-height:1.75;color:var(--text-card);margin-bottom:16px;white-space:pre-wrap;}
-  .intro-dots{display:flex;justify-content:center;gap:7px;margin-bottom:16px;}
-  .intro-dots span{width:7px;height:7px;border-radius:50%;background:var(--border);}
-  .intro-dots span.on{background:var(--accent);}
   .close-x{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--sub);font-size:20px;}
 </style>
 </head>
@@ -483,6 +482,12 @@
       </div>
       <button type="button" class="brand-logo" id="brandLogoBtn" aria-label="T-SEARCH"><span class="bl-t">T</span><span class="bl-s">-SEARCH</span></button>
     </section>
+
+    <!-- GUIDE -->
+    <section class="view" id="view-guide">
+      <div class="section-title" style="margin:0 0 10px;font-size:16px;">Pack View ガイド</div>
+      <div id="guideList"></div>
+    </section>
   </main>
 
   <nav>
@@ -492,21 +497,9 @@
       <button class="navbtn" data-view="stats"><span class="ic">Σ</span>統計</button>
       <button class="navbtn" data-view="memo"><span class="ic">✎</span>メモ</button>
       <button class="navbtn" data-view="settings"><span class="ic">⚙</span>設定</button>
+      <button class="navbtn guide-slot" id="guideTabBtn" data-view="guide"><span class="ic">?</span>ガイド</button>
     </div>
   </nav>
-</div>
-
-<!-- intro (first-run guide) -->
-<div class="modal-bg" id="introBg">
-  <div class="modal">
-    <h3 id="introTitle"></h3>
-    <div id="introBody" class="intro-body"></div>
-    <div id="introDots" class="intro-dots"></div>
-    <div class="btns">
-      <button class="cancel" id="introSkip">スキップ</button>
-      <button class="save" id="introNext">次へ</button>
-    </div>
-  </div>
 </div>
 
 <!-- backup reminder -->
@@ -1886,7 +1879,11 @@ document.getElementById('backupImportInput').addEventListener('change', (e)=>{
 /* ---------- NAV ---------- */
 const VIEW_ORDER = ['home', 'cal', 'stats', 'memo', 'settings'];
 function switchView(view){
-  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.view === view));
+  const prevGuide = document.getElementById('view-guide').classList.contains('active');
+  if(prevGuide) guideScroll = currentScrollTop(); // ガイドを離れるときだけ位置を覚える
+  const tab = view;
+  if(view === 'guide') document.getElementById('guideTabBtn').classList.add('show'); // ガイドを開いたら、設定の隣にボタンが現れる
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.view === tab));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
   if(view === 'cal') renderCalendar();
@@ -1894,11 +1891,13 @@ function switchView(view){
   if(view === 'stats') renderStatsView();
   if(view === 'settings') renderSettings();
   if(view === 'home') renderHome();
-  // 画面を切り替えたら、前の画面のスクロール位置を引き継がず先頭から表示する
-  const mainEl = document.querySelector('main'); if(mainEl) mainEl.scrollTop = 0;
-  window.scrollTo(0, 0);
-  document.body.scrollTop = 0; document.documentElement.scrollTop = 0;
-  const appEl = document.getElementById('app'); if(appEl) appEl.scrollTop = 0;
+  if(view === 'guide') renderGuide();
+  // 画面を切り替えたら、前の画面のスクロール位置を引き継がず先頭から表示する(ガイドだけは前回の位置から)
+  const y = view === 'guide' ? guideScroll : 0;
+  const mainEl = document.querySelector('main'); if(mainEl) mainEl.scrollTop = y;
+  window.scrollTo(0, y);
+  document.body.scrollTop = y; document.documentElement.scrollTop = y;
+  const appEl = document.getElementById('app'); if(appEl) appEl.scrollTop = y;
 }
 document.querySelectorAll('.navbtn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
@@ -1922,47 +1921,19 @@ const INTRO_PAGES = [
   { t: '画面の見かた', b: 'カレンダーで日ごとの本数、統計で週・月のグラフ、メモで日々の記録を残せます。\n\nlast touch は、最後に記録した時刻と、そこからの経過時間です。' },
   { t: 'バックアップのお願い', b: '記録は、このスマホの中だけに保存されます。\n\n機種変更や、アプリを削除する前には、設定の「バックアップ」で「保存」をしてください。' }
 ];
-let introIdx = 0;
-function renderIntro(){
-  const p = INTRO_PAGES[introIdx];
-  document.getElementById('introTitle').textContent = p.t;
-  document.getElementById('introBody').textContent = p.b;
-  document.getElementById('introDots').innerHTML = INTRO_PAGES.map((_, i)=>`<span class="${i === introIdx ? 'on' : ''}"></span>`).join('');
-  const last = introIdx === INTRO_PAGES.length - 1;
-  document.getElementById('introNext').textContent = last ? '分かった' : '次へ';
-  document.getElementById('introSkip').style.display = last ? 'none' : '';
+function renderGuide(){
+  const el = document.getElementById('guideList');
+  if(el.dataset.ready) return;
+  el.innerHTML = INTRO_PAGES.map((p, n)=>`<div class="card"><div class="section-title" style="margin:0 0 8px">${n+1}. ${p.t}</div><div class="intro-body" style="margin-bottom:0;">${p.b.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</div></div>`).join('');
+  el.dataset.ready = '1';
 }
-function openIntro(anchorEl){
-  introIdx = 0;
-  renderIntro();
-  const bg = document.getElementById('introBg');
-  const box = bg.querySelector('.modal');
-  if(anchorEl){
-    // 設定画面から開いたときは、ガイドのカードのすぐ下に表示する
-    const top = Math.round(anchorEl.getBoundingClientRect().bottom + 8);
-    bg.style.alignItems = 'flex-start';
-    bg.style.paddingTop = top + 'px';
-    box.style.borderRadius = '20px';
-    box.style.borderBottom = '1px solid var(--border)';
-    box.style.maxHeight = `calc(100vh - ${top + 90}px)`;
-    box.style.width = 'calc(100% - 32px)';
-  } else {
-    bg.style.alignItems = ''; bg.style.paddingTop = '';
-    box.style.borderRadius = ''; box.style.borderBottom = ''; box.style.maxHeight = ''; box.style.width = '';
-  }
-  bg.classList.add('show');
+let guideScroll = 0;
+function currentScrollTop(){
+  const m = document.querySelector('main');
+  return Math.max(m ? m.scrollTop : 0, document.body.scrollTop || 0, document.documentElement.scrollTop || 0, window.scrollY || 0);
 }
-function closeIntro(){
-  document.getElementById('introBg').classList.remove('show');
-  if(!data.introDone){ data.introDone = true; saveData(); }
-}
-document.getElementById('introNext').addEventListener('click', ()=>{
-  if(introIdx >= INTRO_PAGES.length - 1){ closeIntro(); return; }
-  introIdx++;
-  renderIntro();
-});
-document.getElementById('introSkip').addEventListener('click', closeIntro);
-document.getElementById('introReopenBtn').addEventListener('click', (e)=> openIntro(e.currentTarget.closest('.card')));
+function openIntro(){ switchView('guide'); }
+document.getElementById('introReopenBtn').addEventListener('click', openIntro);
 
 function maybeShowIntro(){
   if(data.introDone) return false;
@@ -1970,6 +1941,7 @@ function maybeShowIntro(){
   const tk = todayKey();
   const hasPast = Object.keys(data.days).some(k => k < tk && data.days[k] && data.days[k].count !== null && data.days[k].count !== undefined);
   if(hasPast){ data.introDone = true; saveData(); return false; }
+  data.introDone = true; saveData();
   openIntro();
   return true;
 }
