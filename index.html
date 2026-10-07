@@ -289,6 +289,10 @@
   }
   .modal .btns .cancel{background:var(--card2);color:var(--text-card);}
   .modal .btns .save{background:var(--accent);color:#08202f;}
+  .intro-body{font-size:15px;line-height:1.75;color:var(--text-card);margin-bottom:16px;white-space:pre-wrap;}
+  .intro-dots{display:flex;justify-content:center;gap:7px;margin-bottom:16px;}
+  .intro-dots span{width:7px;height:7px;border-radius:50%;background:var(--border);}
+  .intro-dots span.on{background:var(--accent);}
   .close-x{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--sub);font-size:20px;}
 </style>
 </head>
@@ -397,15 +401,19 @@
     <!-- SETTINGS -->
     <section class="view" id="view-settings">
       <div class="card">
+        <div class="section-title" style="margin:0 0 6px">Pack View ガイド</div>
+        <button id="introReopenBtn" style="width:100%;margin-top:6px;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">ガイドを見る</button>
+      </div>
+      <div class="card">
         <div class="field">
-          <label>1箱あたりの本数</label>
+          <label>1パックあたりの本数</label>
           <div class="stepper">
             <button id="packSizeDec">−</button>
             <div class="n" id="packSizeSetting">20</div>
             <button id="packSizeInc">+</button>
           </div>
         </div>
-        <div class="check-line">ご利用のタバコ・電子タバコの1箱あたりの本数に合わせて設定してください。</div>
+        <div class="check-line">ご利用のタバコ・電子タバコの1パックあたりの本数に合わせて設定してください。</div>
       </div>
       <div class="card">
         <div class="field">
@@ -431,7 +439,7 @@
       </div>
       <div class="card">
         <div class="field">
-          <label>1箱あたりの価格（円）</label>
+          <label>1パックあたりの価格（円）</label>
           <input type="number" id="pricePerPackInput" inputmode="numeric" placeholder="0">
         </div>
         <div class="check-line">カレンダーの月間支出の基礎数値になります。</div>
@@ -466,6 +474,7 @@
       <div class="card">
         <div class="section-title" style="margin:0 0 6px">バックアップ</div>
         <div class="check-line">データをこの端末のブラウザ外のファイルに保存したり、保存したファイルから復元したりできます。</div>
+        <div class="check-line" style="margin-top:6px;">最後にバックアップした日: <b id="backupLastText">未実施</b></div>
         <div style="display:flex;gap:10px;margin-top:12px;">
           <button id="backupExportBtn" style="flex:1;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">保存</button>
           <button id="backupImportBtn" style="flex:1;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">復元</button>
@@ -487,6 +496,31 @@
   </nav>
 </div>
 
+<!-- intro (first-run guide) -->
+<div class="modal-bg" id="introBg">
+  <div class="modal">
+    <h3 id="introTitle"></h3>
+    <div id="introBody" class="intro-body"></div>
+    <div id="introDots" class="intro-dots"></div>
+    <div class="btns">
+      <button class="cancel" id="introSkip">スキップ</button>
+      <button class="save" id="introNext">次へ</button>
+    </div>
+  </div>
+</div>
+
+<!-- backup reminder -->
+<div class="modal-bg" id="backupRemindBg">
+  <div class="modal">
+    <h3>バックアップしませんか？</h3>
+    <div class="intro-body">しばらくバックアップを取っていません。記録はこのスマホの中だけに保存されているため、機種変更やアプリの削除で消えてしまうことがあります。</div>
+    <div class="btns">
+      <button class="cancel" id="backupRemindLater">あとで</button>
+      <button class="save" id="backupRemindGo">設定を開く</button>
+    </div>
+  </div>
+</div>
+
 <!-- start modal (used for RESET on home, and tapping "today" in the calendar) -->
 <div class="modal-bg" id="startModalBg">
   <div class="modal">
@@ -494,7 +528,7 @@
     <h3>本日の状況を入力</h3>
     <label style="display:block;font-size:16px;color:var(--sub);margin-bottom:8px;">本日の喫煙本数</label>
     <input type="number" id="startCountInput" inputmode="numeric">
-    <label style="display:block;font-size:16px;color:var(--sub);margin-bottom:8px;">パッケージ内残数</label>
+    <label style="display:block;font-size:16px;color:var(--sub);margin-bottom:8px;">パック内残数</label>
     <input type="number" id="startRemainInput" inputmode="numeric">
     <div class="btns">
       <button class="cancel" id="startModalCancel">キャンセル</button>
@@ -578,6 +612,9 @@ function loadData(){
       if(typeof d.premium !== 'boolean') d.premium = false;
       if(typeof d.licenseKey !== 'string') d.licenseKey = '';
       if(!Array.isArray(d.privateMemos)) d.privateMemos = [];
+      if(typeof d.introDone !== 'boolean') d.introDone = false;
+      if(typeof d.lastBackup !== 'number') d.lastBackup = 0;
+      if(typeof d.backupRemindedAt !== 'number') d.backupRemindedAt = 0;
       if(!d.privateMemosManual){
         // 手動並べ替え導入時の移行: これまで表示していた「更新が新しい順」を初期の並びとして固定する
         d.privateMemos.sort((a,b)=> b.updated - a.updated);
@@ -586,7 +623,7 @@ function loadData(){
       return d;
     }
   }catch(e){}
-  return { packSize: 20, days: {}, activePackSize: null, activePackTaps: 0, dailyGoal: 20, dayStartHour: 0, pricePerPack: 0, theme: 'dark', premium: false, licenseKey: '', privateMemos: [] };
+  return { packSize: 20, days: {}, activePackSize: null, activePackTaps: 0, dailyGoal: 20, dayStartHour: 0, pricePerPack: 0, theme: 'dark', premium: false, licenseKey: '', privateMemos: [], introDone: false, lastBackup: 0, backupRemindedAt: 0 };
 }
 function saveData(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
@@ -1647,6 +1684,7 @@ function renderMemoView(){
 
 /* ---------- SETTINGS ---------- */
 function renderSettings(){
+  { const el = document.getElementById('backupLastText'); if(el){ if(data.lastBackup){ const b = new Date(data.lastBackup); el.textContent = `${b.getFullYear()}/${b.getMonth()+1}/${b.getDate()}`; } else { el.textContent = '未実施'; } } }
   document.getElementById('packSizeSetting').textContent = data.packSize;
   document.getElementById('dailyGoalSetting').textContent = data.dailyGoal;
   document.getElementById('dayStartSetting').textContent = `${data.dayStartHour}:00`;
@@ -1777,7 +1815,9 @@ document.getElementById('allResetBtn').addEventListener('click', ()=>{
 
 /* ---------- BACKUP ---------- */
 document.getElementById('backupExportBtn').addEventListener('click', async ()=>{
-  const json = JSON.stringify(data, null, 2);
+  const stamp = Date.now();
+  const markBackup = () => { data.lastBackup = stamp; saveData(); renderSettings(); };
+  const json = JSON.stringify(Object.assign({}, data, { lastBackup: stamp }), null, 2);
   const now = new Date();
   const fname = `packview_backup_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}.json`;
   const file = new File([json], fname, { type: 'application/json' });
@@ -1786,6 +1826,7 @@ document.getElementById('backupExportBtn').addEventListener('click', async ()=>{
   if(navigator.canShare && navigator.canShare({ files: [file] })){
     try{
       await navigator.share({ files: [file], title: fname });
+      markBackup();
       return;
     } catch(err){
       if(err && err.name === 'AbortError') return; // user cancelled the share sheet -- do nothing
@@ -1802,6 +1843,7 @@ document.getElementById('backupExportBtn').addEventListener('click', async ()=>{
   a.click();
   document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  markBackup();
 });
 
 document.getElementById('backupImportBtn').addEventListener('click', ()=>{
@@ -1872,11 +1914,90 @@ function updateHeaderClock(){
 updateHeaderClock();
 setInterval(updateHeaderClock, 1000);
 
+/* ---------- FIRST-RUN GUIDE / BACKUP REMINDER ---------- */
+const INTRO_PAGES = [
+  { t: 'ようこそ', b: 'Pack View は Pack（タバコパック）とView（見る）をコンセプトに、パックの残り本数を確認しながら 喫煙本数を記録するアプリです。' },
+  { t: '最初の設定', b: '① 設定で「1パックあたりの本数」(初期値は20本)と「1パックあたりの価格（円）」を入力してください。\n\n② ホームの「RESET」をタップ、「本日の喫煙本数」と「パック内残数」を入力し「START」をタップしてください。' },
+  { t: '記録のしかた', b: '大きな丸ボタンを押すと、1本記録されます(残数が1減ります)。パックを吸い切ると、自動で新しいパックの本数に戻ります。\n\n押し間違えたら、残数の欄の「＋」で取り消せます。' },
+  { t: '画面の見かた', b: 'カレンダーで日ごとの本数、統計で週・月のグラフ、メモで日々の記録を残せます。\n\nlast touch は、最後に記録した時刻と、そこからの経過時間です。' },
+  { t: 'バックアップのお願い', b: '記録は、このスマホの中だけに保存されます。\n\n機種変更や、アプリを削除する前には、設定の「バックアップ」で「保存」をしてください。' }
+];
+let introIdx = 0;
+function renderIntro(){
+  const p = INTRO_PAGES[introIdx];
+  document.getElementById('introTitle').textContent = p.t;
+  document.getElementById('introBody').textContent = p.b;
+  document.getElementById('introDots').innerHTML = INTRO_PAGES.map((_, i)=>`<span class="${i === introIdx ? 'on' : ''}"></span>`).join('');
+  const last = introIdx === INTRO_PAGES.length - 1;
+  document.getElementById('introNext').textContent = last ? '分かった' : '次へ';
+  document.getElementById('introSkip').style.display = last ? 'none' : '';
+}
+function openIntro(anchorEl){
+  introIdx = 0;
+  renderIntro();
+  const bg = document.getElementById('introBg');
+  const box = bg.querySelector('.modal');
+  if(anchorEl){
+    // 設定画面から開いたときは、ガイドのカードのすぐ下に表示する
+    const top = Math.round(anchorEl.getBoundingClientRect().bottom + 8);
+    bg.style.alignItems = 'flex-start';
+    bg.style.paddingTop = top + 'px';
+    box.style.borderRadius = '20px';
+    box.style.borderBottom = '1px solid var(--border)';
+    box.style.maxHeight = `calc(100vh - ${top + 90}px)`;
+    box.style.width = 'calc(100% - 32px)';
+  } else {
+    bg.style.alignItems = ''; bg.style.paddingTop = '';
+    box.style.borderRadius = ''; box.style.borderBottom = ''; box.style.maxHeight = ''; box.style.width = '';
+  }
+  bg.classList.add('show');
+}
+function closeIntro(){
+  document.getElementById('introBg').classList.remove('show');
+  if(!data.introDone){ data.introDone = true; saveData(); }
+}
+document.getElementById('introNext').addEventListener('click', ()=>{
+  if(introIdx >= INTRO_PAGES.length - 1){ closeIntro(); return; }
+  introIdx++;
+  renderIntro();
+});
+document.getElementById('introSkip').addEventListener('click', closeIntro);
+document.getElementById('introReopenBtn').addEventListener('click', (e)=> openIntro(e.currentTarget.closest('.card')));
+
+function maybeShowIntro(){
+  if(data.introDone) return false;
+  // すでに過去の日の記録がある(以前から使っている)人には表示しない
+  const tk = todayKey();
+  const hasPast = Object.keys(data.days).some(k => k < tk && data.days[k] && data.days[k].count !== null && data.days[k].count !== undefined);
+  if(hasPast){ data.introDone = true; saveData(); return false; }
+  openIntro();
+  return true;
+}
+function maybeShowBackupReminder(){
+  const hasRecords = Object.keys(data.days).some(k => data.days[k] && data.days[k].count > 0);
+  if(!hasRecords) return;
+  const base = Math.max(data.lastBackup || 0, data.backupRemindedAt || 0);
+  if(!base){ data.backupRemindedAt = Date.now(); saveData(); return; } // 初回は今日から30日数える
+  if(Date.now() - base >= 30 * 24 * 60 * 60 * 1000){
+    document.getElementById('backupRemindBg').classList.add('show');
+  }
+}
+document.getElementById('backupRemindLater').addEventListener('click', ()=>{
+  data.backupRemindedAt = Date.now(); saveData();
+  document.getElementById('backupRemindBg').classList.remove('show');
+});
+document.getElementById('backupRemindGo').addEventListener('click', ()=>{
+  data.backupRemindedAt = Date.now(); saveData();
+  document.getElementById('backupRemindBg').classList.remove('show');
+  switchView('settings');
+});
+
 /* ---------- INIT ---------- */
 applyTheme(data.theme);
 renderCalendarDow();
 renderHome();
 renderSettings();
+if(!maybeShowIntro()) maybeShowBackupReminder();
 
 /* register service worker for installability */
 if('serviceWorker' in navigator){
