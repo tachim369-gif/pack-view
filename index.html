@@ -1922,7 +1922,7 @@ setInterval(updateHeaderClock, 1000);
 const INTRO_PAGES = [
   { t: 'ようこそ', b: 'Pack View は Pack（タバコパック）とView（見る）をコンセプトに、パック内の残り本数を確認しながら 喫煙本数を記録するアプリです。' },
   { t: '最初の設定', b: '① 設定で次の4つを入力してください。\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n\n② ホームの「RESET」をタップ、「本日の喫煙本数」と「パック内残数」を入力し「START」をタップしてください。' },
-  { t: 'ホーム', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last touchパネルの順に並んでいます。\n\n① パックパネル\n・[[b]] パック内残数のイメージ表示\n・[[r]] パック内喫煙本数のイメージ表示\n・[[rs]] パック内喫煙本数\n・[[bs]] パック内残数\n・[[p]][[m]] [[bs]] の表示が実際と違っている場合に変更できます\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます\n\n② カウンターパネル\n大きなボタンをタップするとボタン内に表示される喫煙本数が1本加算され、パックパネルの[[b]]が[[r]]に変化します。「−」で直前の1本を取り消し、「RESET」で本日の喫煙本数とパック内残数を入力し直せます。\n\n③ last touchパネル\n最後に記録した時刻と、そこからの経過時間です。' },
+  { t: 'ホーム', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last touchパネルの順に並んでいます。\n\n① パックパネル\n・[[b]] パック内残数のイメージ表示\n・[[r]] パック内喫煙本数のイメージ表示\n・[[rs]] パック内喫煙本数\n・[[bs]] パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます\n\n② カウンターパネル\n・[[big]] タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]] 本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last touchパネル\n最後に記録した時刻と、そこからの経過時間です。' },
   { t: 'カレンダー', b: '日ごとの喫煙本数が表示されます。目標本数を超えた日は赤で表示されます。\n\n日付をタップすると、本数とメモを編集できます。左右にスワイプすると月を移動でき、「Today」で今月に戻ります。' },
   { t: '統計', b: '週・月ごとの喫煙本数のグラフと、一日の最大・最小本数、連続記録を見られます。(プレミアム機能)' },
   { t: 'メモ', b: '「カレンダーメモ」は日付に紐づくメモ、「プライベートメモ」は日付に関係なく残せるメモです。\n\nプライベートメモは「＋」で追加し、「≡」をドラッグすると並べ替えられます。' },
@@ -1933,12 +1933,14 @@ const GUIDE_ICONS = {
   r:  '<span style="display:inline-block;width:.95em;height:.95em;border-radius:50%;background:var(--danger);vertical-align:-.1em;"></span>',
   bs: '<span style="display:inline-block;width:.95em;height:.95em;border-radius:3px;background:var(--accent);vertical-align:-.1em;"></span>',
   rs: '<span style="display:inline-block;width:.95em;height:.95em;border-radius:3px;background:var(--danger);vertical-align:-.1em;"></span>',
+  big: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.3em;font-size:.85em;font-weight:700;text-indent:0;text-align:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fca5a5,#f87171);color:#4a1414;vertical-align:.1em;">0</span>',
+  rst: '<span style="display:inline-block;box-sizing:border-box;width:1.3em;height:1.3em;font-size:12.75px;line-height:1.3em;text-align:center;text-indent:0;border-radius:50%;background:var(--card2);border:1px solid var(--danger);color:var(--danger);vertical-align:-.25em;overflow:hidden;"><span style="display:block;font-size:4.2px;font-weight:800;line-height:15px;">RESET</span></span>',
   p: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.3em;font-size:.85em;text-indent:0;text-align:center;border-radius:50%;background:#ffe14d;color:#3a2a00;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:.1em;">＋</span>',
   m: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.3em;font-size:.85em;text-indent:0;text-align:center;border-radius:50%;background:#ffe14d;color:#3a2a00;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:.1em;">－</span>'
 };
 function guideHtml(text){
   const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const h = esc.replace(/\[\[(b|r|bs|rs|p|m)\]\]/g, (_, k)=> GUIDE_ICONS[k]);
+  const h = esc.replace(/\[\[(b|r|bs|rs|p|m|big|rst)\]\]/g, (_, k)=> GUIDE_ICONS[k]);
   let out = '', prevDiv = false;
   h.split('\n').forEach((ln, i)=>{
     if(ln.startsWith('・')){
