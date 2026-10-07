@@ -239,6 +239,9 @@
   .field .stepper .n{font-size:26px;font-weight:700;min-width:52px;text-align:center;}
   .field .stepper button{width:38px;height:38px;border-radius:10px;background:var(--card2);border:1px solid var(--border);color:var(--text-card);font-size:18px;}
   .field input[type=number]{width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text-card);font-size:18px;padding:10px 14px;border-radius:10px;}
+  .field input#pricePerPackInput{font-size:26px;font-weight:700;height:38px;box-sizing:border-box;padding:0 14px;width:156px;text-align:center;}
+  #pricePerPackInput{-moz-appearance:textfield;appearance:textfield;}
+  #pricePerPackInput::-webkit-outer-spin-button,#pricePerPackInput::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
   .chart-bar{fill:var(--accent);}
   .chart-bar.over{fill:var(--danger);}
   .theme-swatches{display:flex;gap:14px;}
@@ -475,7 +478,7 @@
       <div class="card">
         <div class="section-title" style="margin:0 0 6px">バックアップ</div>
         <div class="check-line">データをこの端末のブラウザ外のファイルに保存したり、保存したファイルから復元したりできます。</div>
-        <div class="check-line" style="margin-top:6px;">最後にバックアップした日: <b id="backupLastText">未実施</b></div>
+        <div class="check-line" style="margin-top:6px;">最後にバックアップした日: <b id="backupLastText">－</b></div>
         <div style="display:flex;gap:10px;margin-top:12px;">
           <button id="backupExportBtn" style="flex:1;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">保存</button>
           <button id="backupImportBtn" style="flex:1;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">復元</button>
@@ -515,6 +518,17 @@
     <div class="btns">
       <button class="cancel" id="backupRemindLater">あとで</button>
       <button class="save" id="backupRemindGo">設定を開く</button>
+    </div>
+  </div>
+</div>
+
+<!-- plus-unavailable notice -->
+<div class="modal-bg" id="plusNoticeBg">
+  <div class="modal">
+    <div class="intro-body" id="plusNoticeText"></div>
+    <div class="btns">
+      <button class="cancel" id="plusNoticeClose" style="font-size:24px;line-height:1;">×</button>
+      <button class="save" id="plusNoticeReset">RESET</button>
     </div>
   </div>
 </div>
@@ -781,12 +795,8 @@ function renderHome(){
   const boxValues = day.packHistory.map(h=>h.todayTaps).concat([day.activePackTaps]);
   boxValues.forEach(val=>{
     const box = document.createElement('div');
-    if(val > 0){
-      box.className = 'box';
-      box.textContent = val;
-    } else {
-      box.className = 'box blank';
-    }
+    box.className = 'box';
+    box.textContent = val;
     historyEl.appendChild(box);
   });
   const remainWrap = document.createElement('div');
@@ -795,7 +805,7 @@ function renderHome(){
   const plusBox = document.createElement('div');
   plusBox.className = 'box remain-box remain-adj';
   plusBox.textContent = '＋';
-  plusBox.addEventListener('click', doUndo); // ＋ = 残数が増える(直前のタップを取り消す)
+  plusBox.addEventListener('click', ()=> undoOrNotice('＋')); // ＋ = 残数が増える(直前のタップを取り消す)
 
   const remainBox = document.createElement('div');
   remainBox.className = 'box remain-box';
@@ -839,6 +849,15 @@ function doTap(withEffect){
   if(document.getElementById('view-cal').classList.contains('active')) renderCalendar();
 }
 
+function undoOrNotice(sym){
+  if(ensureToday().count <= 0){
+    const icon = (sym === '＋') ? GUIDE_ICONS.p : GUIDE_ICONS.m;
+    document.getElementById('plusNoticeText').innerHTML = '本日の喫煙本数が0のため' + icon + 'は使えません。\n修正をしたい場合にはRESETをタップしてください。';
+    document.getElementById('plusNoticeBg').classList.add('show');
+    return;
+  }
+  doUndo();
+}
 function doUndo(){
   const day = ensureToday();
   if(day.count <= 0) return;
@@ -870,7 +889,7 @@ document.getElementById('tapBtn').addEventListener('animationend', (e)=>{
   // (which hides/shows this button via display:none) doesn't replay it
   if(e.animationName === 'tapGlow') e.target.classList.remove('tap-flash');
 });
-document.getElementById('minusBtn').addEventListener('click', doUndo);
+document.getElementById('minusBtn').addEventListener('click', ()=> undoOrNotice('－'));
 
 function openStartModal(){
   const day = ensureToday();
@@ -879,6 +898,13 @@ function openStartModal(){
   document.getElementById('startModalBg').classList.add('show');
 }
 document.getElementById('resetBtn').addEventListener('click', openStartModal);
+(function(){
+  const bg = document.getElementById('plusNoticeBg');
+  const close = ()=> bg.classList.remove('show');
+  document.getElementById('plusNoticeClose').addEventListener('click', close);
+  document.getElementById('plusNoticeReset').addEventListener('click', ()=>{ close(); openStartModal(); });
+  bg.addEventListener('click', (e)=>{ if(e.target.id === 'plusNoticeBg') close(); });
+})();
 
 const startModalBg = document.getElementById('startModalBg');
 function closeStartModal(){ startModalBg.classList.remove('show'); }
@@ -1682,7 +1708,7 @@ function renderMemoView(){
 
 /* ---------- SETTINGS ---------- */
 function renderSettings(){
-  { const el = document.getElementById('backupLastText'); if(el){ if(data.lastBackup){ const b = new Date(data.lastBackup); el.textContent = `${b.getFullYear()}/${b.getMonth()+1}/${b.getDate()}`; } else { el.textContent = '未実施'; } } }
+  { const el = document.getElementById('backupLastText'); if(el){ if(data.lastBackup){ const b = new Date(data.lastBackup); el.textContent = `${b.getFullYear()}/${b.getMonth()+1}/${b.getDate()}`; } else { el.textContent = '－'; } } }
   document.getElementById('packSizeSetting').textContent = data.packSize;
   document.getElementById('dailyGoalSetting').textContent = data.dailyGoal;
   document.getElementById('dayStartSetting').textContent = `${data.dayStartHour}:00`;
@@ -1921,8 +1947,8 @@ setInterval(updateHeaderClock, 1000);
 /* ---------- FIRST-RUN GUIDE / BACKUP REMINDER ---------- */
 const INTRO_PAGES = [
   { t: 'ようこそ', b: 'Pack View は Pack（タバコパック）とView（見る）をコンセプトに、パック内の残り本数を確認しながら 喫煙本数を記録するアプリです。' },
-  { t: '最初の設定', b: '① 設定で次の4つを入力してください。\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n\n② ホームの「RESET」をタップ、「本日の喫煙本数」と「パック内残数」を入力し「START」をタップしてください。' },
-  { t: 'ホーム', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last tapパネルの順に並んでいます。\n\n① パックパネル\n・[[b]] パック内残数のイメージ表示\n・[[r]] パック内喫煙本数のイメージ表示\n・[[rs]] パック内喫煙本数\n・[[bs]] パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます\n\n② カウンターパネル\n・[[big]] タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]] 本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last tapパネル\n・時刻 基本的には[[big]]を最後にタップした時刻です。[[p]][[m]][[rst]]の操作でも更新されます。\n・経過時間 その時刻からの経過時間です。' },
+  { t: '最初の設定', b: '① 設定で以下の4項目を入力してください。\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n\n② ホームの「RESET」をタップ、「本日の喫煙本数」と「パック内残数」を入力し「START」をタップしてください。' },
+  { t: 'ホーム', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last tapパネルの順に並んでいます。\n\n① パックパネル\n・[[b]]  パック内残数のイメージ表示\n・[[r]]  パック内喫煙本数のイメージ表示\n・[[rs]]  パック内喫煙本数\n・[[bs]]  パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます。\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます。\n\n② カウンターパネル\n・[[big]]  タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]]  本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last tapパネル\n・時刻  基本的には[[big]]を最後にタップした時刻です。[[p]][[m]][[rst]]の操作でも更新されます。\n・経過時間  その時刻からの経過時間です。' },
   { t: 'カレンダー', b: '日ごとの喫煙本数が表示されます。目標本数を超えた日は赤で表示されます。\n\n日付をタップすると、本数とメモを編集できます。左右にスワイプすると月を移動でき、「Today」で今月に戻ります。' },
   { t: '統計', b: '週・月ごとの喫煙本数のグラフと、一日の最大・最小本数、連続記録を見られます。(プレミアム機能)' },
   { t: 'メモ', b: '「カレンダーメモ」は日付に紐づくメモ、「プライベートメモ」は日付に関係なく残せるメモです。\n\nプライベートメモは「＋」で追加し、「≡」をドラッグすると並べ替えられます。' },
@@ -1933,10 +1959,10 @@ const GUIDE_ICONS = {
   r:  '<span style="display:inline-block;width:.95em;height:.95em;border-radius:50%;background:var(--danger);vertical-align:-.1em;"></span>',
   bs: '<span style="display:inline-block;width:.95em;height:.95em;border-radius:3px;background:var(--accent);vertical-align:-.1em;"></span>',
   rs: '<span style="display:inline-block;width:.95em;height:.95em;border-radius:3px;background:var(--danger);vertical-align:-.1em;"></span>',
-  big: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.3em;font-size:.85em;font-weight:700;text-indent:0;text-align:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fca5a5,#f87171);color:#4a1414;vertical-align:.1em;">0</span>',
+  big: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.5em;font-size:.85em;font-weight:700;text-indent:0;text-align:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fca5a5,#f87171);color:#4a1414;vertical-align:.1em;">0</span>',
   rst: '<span style="display:inline-block;box-sizing:border-box;width:1.3em;height:1.3em;font-size:12.75px;line-height:1.3em;text-align:center;text-indent:0;border-radius:50%;background:var(--card2);border:1px solid var(--danger);color:var(--danger);vertical-align:-.25em;overflow:hidden;"><span style="display:block;font-size:4.2px;font-weight:800;line-height:15px;">RESET</span></span>',
-  p: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.3em;font-size:.85em;text-indent:0;text-align:center;border-radius:50%;background:#ffe14d;color:#3a2a00;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:.1em;">＋</span>',
-  m: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.3em;font-size:.85em;text-indent:0;text-align:center;border-radius:50%;background:#ffe14d;color:#3a2a00;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:.1em;">－</span>'
+  p: '<span style="display:inline-block;width:1.3em;height:1.3em;font-size:.85em;border-radius:50%;background:linear-gradient(#3a2a00,#3a2a00) center/52% 11% no-repeat,linear-gradient(#3a2a00,#3a2a00) center/11% 52% no-repeat,#ffe14d;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:-.22em;"></span>',
+  m: '<span style="display:inline-block;width:1.3em;height:1.3em;font-size:.85em;border-radius:50%;background:linear-gradient(#3a2a00,#3a2a00) center/52% 11% no-repeat,#ffe14d;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:-.22em;"></span>',
 };
 function guideHtml(text){
   const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;');
