@@ -406,17 +406,6 @@
       </div>
       <div class="card">
         <div class="field">
-          <label>1パックあたりの本数</label>
-          <div class="stepper">
-            <button id="packSizeDec">−</button>
-            <div class="n" id="packSizeSetting">20</div>
-            <button id="packSizeInc">+</button>
-          </div>
-        </div>
-        <div class="check-line">ご利用のタバコ・電子タバコの1パックあたりの本数に合わせて設定してください。</div>
-      </div>
-      <div class="card">
-        <div class="field">
           <label>1日の開始時間</label>
           <div class="stepper">
             <button id="dayStartDec">−</button>
@@ -428,6 +417,24 @@
       </div>
       <div class="card">
         <div class="field">
+          <label>1パックあたりの本数</label>
+          <div class="stepper">
+            <button id="packSizeDec">−</button>
+            <div class="n" id="packSizeSetting">20</div>
+            <button id="packSizeInc">+</button>
+          </div>
+        </div>
+        <div class="check-line">ご利用のタバコ・電子タバコの1パックあたりの本数に合わせて設定してください。</div>
+      </div>
+      <div class="card">
+        <div class="field">
+          <label>1パックあたりの価格（円）</label>
+          <input type="number" id="pricePerPackInput" inputmode="numeric" placeholder="0">
+        </div>
+        <div class="check-line">カレンダーの月間支出の基礎数値になります。</div>
+      </div>
+      <div class="card">
+        <div class="field">
           <label>1日の目標本数</label>
           <div class="stepper">
             <button id="goalDec">−</button>
@@ -436,13 +443,6 @@
           </div>
         </div>
         <div class="check-line">目標本数を超えた日はカレンダーの数字が赤で表示され、超過日数としてカウントされます。</div>
-      </div>
-      <div class="card">
-        <div class="field">
-          <label>1パックあたりの価格（円）</label>
-          <input type="number" id="pricePerPackInput" inputmode="numeric" placeholder="0">
-        </div>
-        <div class="check-line">カレンダーの月間支出の基礎数値になります。</div>
       </div>
       <div class="card">
         <div class="section-title" style="margin:0 0 10px">プレミアム機能</div>
@@ -1917,7 +1917,7 @@ setInterval(updateHeaderClock, 1000);
 /* ---------- FIRST-RUN GUIDE / BACKUP REMINDER ---------- */
 const INTRO_PAGES = [
   { t: 'ようこそ', b: 'Pack View は Pack（タバコパック）とView（見る）をコンセプトに、パックの残り本数を確認しながら 喫煙本数を記録するアプリです。' },
-  { t: '最初の設定', b: '① 設定で「1パックあたりの本数」(初期値は20本)と「1パックあたりの価格（円）」を入力してください。\n\n② ホームの「RESET」をタップ、「本日の喫煙本数」と「パック内残数」を入力し「START」をタップしてください。' },
+  { t: '最初の設定', b: '① 設定で次の4つを入力してください。\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n\n② ホームの「RESET」をタップ、「本日の喫煙本数」と「パック内残数」を入力し「START」をタップしてください。' },
   { t: '記録のしかた', b: '大きな丸ボタンを押すと、1本記録されます(残数が1減ります)。パックを吸い切ると、自動で新しいパックの本数に戻ります。\n\n押し間違えたら、残数の欄の「＋」で取り消せます。' },
   { t: '画面の見かた', b: 'カレンダーで日ごとの本数、統計で週・月のグラフ、メモで日々の記録を残せます。\n\nlast touch は、最後に記録した時刻と、そこからの経過時間です。' },
   { t: 'バックアップのお願い', b: '記録は、このスマホの中だけに保存されます。\n\n機種変更や、アプリを削除する前には、設定の「バックアップ」で「保存」をしてください。' }
