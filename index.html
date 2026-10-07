@@ -214,12 +214,13 @@
   }
   .memo-item .memo-date{font-size:16px;color:var(--sub);margin-bottom:4px;font-weight:600;}
   .memo-item .memo-text{font-size:16px;color:var(--text-card);white-space:pre-wrap;line-height:1.5;}
-  .memo-tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .memo-tabs{display:flex;gap:8px;margin-bottom:14px;position:relative;}
   .memo-tabs button{
     flex:1;padding:10px 0;border-radius:12px;background:var(--card);border:1px solid var(--border);
     color:var(--sub);font-size:16px;font-weight:600;
   }
   .memo-tabs button.active{color:var(--accent);border-color:var(--accent);}
+  .memo-tabs button.memo-plus{position:absolute;right:6px;top:50%;transform:translateY(-50%);flex:none;width:30px;height:30px;padding:0;border-radius:8px;font-size:20px;line-height:1;font-weight:700;color:var(--accent);background:var(--card2);border:1px solid var(--accent);cursor:pointer;}
   .pm-item{display:flex;gap:12px;align-items:flex-start;}
   .pm-item .memo-text{flex:1;min-width:0;}
   .pm-handle{font-size:26px;line-height:1.2;color:var(--sub);touch-action:none;cursor:grab;padding:0 10px;margin:-4px -6px -4px 0;user-select:none;-webkit-user-select:none;}
@@ -349,12 +350,12 @@
       <div class="memo-tabs">
         <button id="memoTabCal" class="active">カレンダーメモ</button>
         <button id="memoTabPrivate">プライベートメモ</button>
+        <button id="privateMemoAdd" class="memo-plus" aria-label="新規メモ" style="display:none;">＋</button>
       </div>
       <div id="memoCalWrap">
         <div id="memoList"></div>
       </div>
       <div id="memoPrivateWrap" style="display:none;">
-        <button class="memo-add-btn" id="privateMemoAdd">＋ 新規メモ</button>
         <div id="privateMemoList"></div>
       </div>
     </section>
@@ -1468,6 +1469,7 @@ function setMemoTab(tab){
   document.getElementById('memoTabPrivate').classList.toggle('active', tab === 'private');
   document.getElementById('memoCalWrap').style.display = tab === 'cal' ? '' : 'none';
   document.getElementById('memoPrivateWrap').style.display = tab === 'private' ? '' : 'none';
+  document.getElementById('privateMemoAdd').style.display = tab === 'private' ? '' : 'none';
   renderMemoView();
 }
 document.getElementById('memoTabCal').addEventListener('click', ()=> setMemoTab('cal'));
