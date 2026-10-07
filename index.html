@@ -399,9 +399,11 @@
 
     <!-- SETTINGS -->
     <section class="view" id="view-settings">
-      <div class="card">
-        <div class="section-title" style="margin:0 0 6px">Pack View ガイド</div>
-        <button id="introReopenBtn" style="width:100%;margin-top:6px;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">ガイドを見る</button>
+      <div class="card" style="padding-top:14px;padding-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="section-title" style="margin:0;">Pack View ガイド</div>
+          <button id="introReopenBtn" style="padding:7px 16px;border-radius:999px;font-size:13px;font-weight:800;border:1px solid var(--accent);background:var(--card2);color:var(--accent);cursor:pointer;">ⓘ ガイド</button>
+        </div>
       </div>
       <div class="card">
         <div class="field">
@@ -485,7 +487,10 @@
 
     <!-- GUIDE -->
     <section class="view" id="view-guide">
-      <div class="section-title" style="margin:0 0 10px;font-size:16px;">Pack View ガイド</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;">
+        <div class="section-title" style="margin:0;font-size:16px;">Pack View ガイド</div>
+        <button id="guideCloseBtn" aria-label="ガイドを閉じる" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-card);font-size:16px;cursor:pointer;">✕</button>
+      </div>
       <div id="guideList"></div>
     </section>
   </main>
@@ -497,7 +502,7 @@
       <button class="navbtn" data-view="stats"><span class="ic">Σ</span>統計</button>
       <button class="navbtn" data-view="memo"><span class="ic">✎</span>メモ</button>
       <button class="navbtn" data-view="settings"><span class="ic">⚙</span>設定</button>
-      <button class="navbtn guide-slot" id="guideTabBtn" data-view="guide"><span class="ic">?</span>ガイド</button>
+      <button class="navbtn guide-slot" id="guideTabBtn" data-view="guide"><span class="ic">ⓘ</span>ガイド</button>
     </div>
   </nav>
 </div>
@@ -1934,6 +1939,10 @@ function currentScrollTop(){
 }
 function openIntro(){ switchView('guide'); }
 document.getElementById('introReopenBtn').addEventListener('click', openIntro);
+document.getElementById('guideCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('guideTabBtn').classList.remove('show'); // ガイドを閉じたら、設定の隣のボタンも消える
+  switchView('settings');
+});
 
 function maybeShowIntro(){
   if(data.introDone) return false;
