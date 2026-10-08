@@ -1038,7 +1038,7 @@ function renderCalendar(){
   }
   statsHtml += `<br>月間合計 <b>${total}</b>本/月　月間平均 <b>${avg}</b>本/日`;
   if(data.pricePerPack > 0){
-    const costPerCig = data.pricePerPack / 20;
+    const costPerCig = data.pricePerPack / data.packSize;
     const monthCost = Math.round(total * costPerCig);
     const avgCost = monthKeys.length ? Math.round(monthCost / monthKeys.length) : 0;
     statsHtml += `<br>月間支出 <b>¥${monthCost.toLocaleString()}</b>/月　月間平均 <b>¥${avgCost.toLocaleString()}</b>/日`;
@@ -1960,7 +1960,7 @@ const GUIDE_ICONS = {
   r:  '<span style="display:inline-block;width:.95em;height:.95em;border-radius:50%;background:var(--danger);vertical-align:-.1em;"></span>',
   bs: '<span style="display:inline-block;width:.95em;height:.95em;border-radius:3px;background:var(--accent);vertical-align:-.1em;"></span>',
   rs: '<span style="display:inline-block;width:.95em;height:.95em;border-radius:3px;background:var(--danger);vertical-align:-.1em;"></span>',
-  big: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.5em;font-size:.85em;font-weight:700;text-indent:0;text-align:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fca5a5,#f87171);color:#4a1414;vertical-align:.1em;">0</span>',
+  big: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.4em;font-size:.85em;font-weight:700;text-indent:0;text-align:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fca5a5,#f87171);color:#4a1414;vertical-align:-.02em;">0</span>',
   rst: '<span style="display:inline-block;box-sizing:border-box;width:1.3em;height:1.3em;font-size:12.75px;line-height:1.3em;text-align:center;text-indent:0;border-radius:50%;background:var(--card2);border:1px solid var(--danger);color:var(--danger);vertical-align:-.25em;overflow:hidden;"><span style="display:block;font-size:4.2px;font-weight:800;line-height:15px;">RESET</span></span>',
   p: '<span style="display:inline-block;width:1.3em;height:1.3em;font-size:.85em;border-radius:50%;background:linear-gradient(#3a2a00,#3a2a00) center/52% 11% no-repeat,linear-gradient(#3a2a00,#3a2a00) center/11% 52% no-repeat,#ffe14d;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:-.22em;"></span>',
   m: '<span style="display:inline-block;width:1.3em;height:1.3em;font-size:.85em;border-radius:50%;background:linear-gradient(#3a2a00,#3a2a00) center/52% 11% no-repeat,#ffe14d;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:-.22em;"></span>',
