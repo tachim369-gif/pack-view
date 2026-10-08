@@ -449,9 +449,9 @@
         </div>
         <div class="check-line">目標本数を超えた日はカレンダーの数字が赤で表示され、超過日数としてカウントされます。</div>
       </div>
-      <div class="card">
+      <div class="card" style="border:1px solid var(--warn);">
         <div class="section-title" style="margin:0 0 10px">プレミアム機能</div>
-        <div id="premiumActive" style="display:none;" class="check-line">✓ プレミアム機能が有効です(テーマ・統計タブが使えます)</div>
+        <div id="premiumActive" style="display:none;color:var(--warn);" class="check-line">✓ プレミアム機能が有効です(カラーテーマ・統計タブが使えます)</div>
         <div id="premiumLocked">
           <div class="check-line">ライセンスキーを入力すると、カラーテーマと統計タブが使えるようになります。</div>
           <div style="display:flex;gap:8px;margin-top:10px;">
@@ -459,7 +459,7 @@
             <button id="licenseVerifyBtn" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-card);font-size:13px;font-weight:800;white-space:nowrap;">認証する</button>
           </div>
           <div id="licenseStatus" class="check-line" style="margin-top:8px;"></div>
-          <div class="check-line" style="margin-top:8px;"><a href="https://tsearcher2.gumroad.com/l/hgvcdh" target="_blank" rel="noopener" style="color:var(--accent);">まだ購入していない場合はこちら</a></div>
+          <div class="check-line" style="margin-top:8px;"><a href="https://tsearcher2.gumroad.com/l/hgvcdh" target="_blank" rel="noopener" style="color:var(--warn);">まだ購入していない場合はこちら</a></div>
         </div>
       </div>
       <div class="card">
@@ -472,7 +472,7 @@
         <div class="check-line">データはこの端末のブラウザ内に保存されています。オールリセットを実行するとブラウザ内のすべてのデータが削除され、アプリが初期状態に戻ります。実行前にバックアップを取ってください。</div>
         <button id="allResetBtn" class="action-btn reset" style="margin-top:12px;width:100%;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">オールリセット</button>
       </div>
-      <div class="card" style="border:1px solid var(--danger);">
+      <div class="card" style="border:1px solid var(--ok);">
         <div class="section-title" style="margin:0 0 6px">バックアップ</div>
         <div class="check-line">データをファイルとしてこの端末に保存します。復元操作により保存した状態がアプリに復元されます。</div>
         <div class="check-line" style="margin-top:6px;">最後にバックアップした日: <b id="backupLastText">－</b></div>
@@ -1950,7 +1950,7 @@ const INTRO_PAGES = [
   { t: '統計（プレミアム機能）', ic: 'Σ', b: '統計ではサマリー、週間・月間の喫煙本数グラフ（スクロールすると過去データも確認できます）、記録などを確認することができます。' },
   { t: 'メモ', ic: '✎', b: 'メモはカレンダーメモとプライベートメモをタップで切替えて使用できます。\n\n・カレンダーメモ  カレンダーの各日付メモの一覧です。タップすると編集、削除できます。\n・プライベートメモ  [[mp]]で新規書込みできます。[[hd]]をドラッグすると並べ替えできます。' },
   { t: '設定', ic: '☰', b: '設定にはPack Viewを快適に使用していただくための様々な機能があります。\n\n・Pack Viewガイド  アプリの使い方、機能を説明しています。[[gb]]ボタンでページが開きます。\n@@GROUP\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n@@END アプリの条件設定ができます。\n・プレミアム機能  ライセンスキーを入力すると、カラーテーマと統計が使えるようになります。\n・カラーテーマ（プレミアム機能）  画面の配色を変更できます。\n・オールリセット  アプリデータの取り扱いについて説明しています。\n・バックアップ  アプリデータのバックアップについて説明しています。' },
-  { t: 'バックアップのお願い', nonum: true, warn: 'バックアップ', ic: '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-.15em;color:var(--danger);filter:drop-shadow(0 0 4px var(--danger));"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4.5"/></svg>', b: 'バックアップはあなたのデータを守ります。\n・機種変更\n・アプリの削除\n・オールリセット\nなどに影響を受けません。アプリ上でデータは復元されます。' }
+  { t: 'バックアップのお願い', nonum: true, warn: 'バックアップ', ic: '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-.15em;color:var(--ok);filter:drop-shadow(0 0 4px var(--ok));"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4.5"/></svg>', b: 'バックアップはあなたのデータを守ります。\n・機種変更\n・アプリの削除\n・オールリセット\nなどに影響を受けません。アプリ上でデータは復元されます。' }
 ];
 const GUIDE_ICONS = {
   b:  '<span style="display:inline-block;width:.95em;height:.95em;border-radius:50%;background:var(--accent);vertical-align:-.1em;"></span>',
@@ -1960,7 +1960,7 @@ const GUIDE_ICONS = {
   big: '<span style="display:inline-block;width:1.3em;height:1.3em;line-height:1.35em;font-size:.85em;font-weight:700;text-indent:0;text-align:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fca5a5,#f87171);color:#4a1414;vertical-align:.08em;">0</span>',
   rst: '<span style="display:inline-block;box-sizing:border-box;width:1.3em;height:1.3em;font-size:12.75px;line-height:1.3em;text-align:center;text-indent:0;border-radius:50%;background:var(--card2);border:1px solid var(--danger);color:var(--danger);vertical-align:-.17em;overflow:hidden;"><span style="display:block;font-size:4.2px;font-weight:800;line-height:15px;">RESET</span></span>',
   mp: '<span style="display:inline-block;box-sizing:border-box;width:1.4em;height:1.4em;font-size:.85em;border-radius:5px;background:linear-gradient(var(--accent),var(--accent)) center/54% 12% no-repeat,linear-gradient(var(--accent),var(--accent)) center/12% 54% no-repeat,var(--card2);border:1px solid var(--accent);vertical-align:-.25em;"></span>',
-  hd: '<span style="display:inline-block;width:1.3em;height:1.1em;font-size:.85em;background:linear-gradient(var(--sub),var(--sub)) center 18%/100% 10% no-repeat,linear-gradient(var(--sub),var(--sub)) center 50%/100% 10% no-repeat,linear-gradient(var(--sub),var(--sub)) center 82%/100% 10% no-repeat;vertical-align:-.15em;"></span>',
+  hd: '<span style="display:inline-block;color:var(--sub);font-size:1em;line-height:1;vertical-align:-.05em;text-indent:0;">☰</span>',
   td: '<span style="display:inline-block;padding:2px 10px;font-size:.8em;font-weight:700;line-height:1.3;border-radius:999px;color:var(--accent);background:var(--card2);border:1px solid var(--border);text-indent:0;vertical-align:.05em;">Today</span>',
   st: '<span style="display:inline-block;padding:.05em .45em;font-size:.75em;font-weight:600;border-radius:8px;background:var(--accent);color:#08202f;text-indent:0;vertical-align:.05em;">START</span>',
   sv: '<span style="display:inline-block;padding:.2em .9em;font-size:.85em;font-weight:800;border-radius:8px;background:var(--card2);color:var(--text-card);border:1px solid var(--border);text-indent:0;vertical-align:.05em;">保存</span>',
@@ -2002,7 +2002,7 @@ function guideHtml(text){
 function renderGuide(){
   const el = document.getElementById('guideList');
   if(el.dataset.ready) return;
-  el.innerHTML = INTRO_PAGES.map((p, n)=>`<div class="card"><div class="section-title" style="margin:0 0 8px">${p.nonum ? '' : (n+1) + '. '}${p.ic ? '<span style="color:var(--accent);text-shadow:0 0 8px var(--accent);">' + p.ic + '</span> ' : ''}${p.warn ? p.t.replace(p.warn, '<span style="color:var(--danger);">' + p.warn + '</span>') : p.t}</div><div class="intro-body" style="margin-bottom:0;">${guideHtml(p.b)}</div></div>`).join('');
+  el.innerHTML = INTRO_PAGES.map((p, n)=>`<div class="card"><div class="section-title" style="margin:0 0 8px">${p.nonum ? '' : (n+1) + '. '}${p.ic ? '<span style="color:var(--accent);text-shadow:0 0 8px var(--accent);">' + p.ic + '</span> ' : ''}${p.warn ? '<span style="color:var(--ok);">' + p.t + '</span>' : p.t}</div><div class="intro-body" style="margin-bottom:0;">${guideHtml(p.b)}</div></div>`).join('');
   el.dataset.ready = '1';
 }
 let guideScroll = 0;
