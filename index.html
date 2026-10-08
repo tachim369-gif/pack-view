@@ -1953,6 +1953,7 @@ const INTRO_PAGES = [
   { t: 'カレンダー', ic: '▦', b: 'カレンダーでは今月の喫煙状況、月間記録、喫煙本数グラフなどを確認することができます。\n\n・日付には該当日の喫煙本数が表示されます。目標本数を超過した日は赤で表示されます。\n・日付をタップすると該当日の喫煙本数とメモを編集できます。（本日以降はメモのみ編集できます）\n・カレンダーをスワイプすると表示月が変わります。[[td]]で今月が表示されます。' },
   { t: '統計（プレミアム機能）', ic: 'Σ', b: '統計ではサマリー、週間・月間の喫煙本数グラフ（スクロールすると過去データも確認できます）、記録などを確認することができます。' },
   { t: 'メモ', ic: '✎', b: 'メモはカレンダーメモとプライベートメモをタップで切替えて使用できます。\n\n・カレンダーメモ  カレンダーの各日付メモの一覧です。タップすると編集、削除できます。\n・プライベートメモ  [[mp]]で新規書込みできます。[[hd]]をドラッグすると並べ替えできます。' },
+  { t: '設定', ic: '☰', b: '設定にはPack Viewを快適に使用していただくための様々な機能があります。\n\n・Pack Viewガイド  アプリの使い方、機能を説明しています。[[gb]]ボタンでページが開きます。\n@@GROUP\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n@@END アプリの条件設定ができます。\n・プレミアム機能  ライセンスキーを入力すると、カラーテーマと統計が使えるようになります。\n・テーマ  画面の配色を変更できます。（プレミアム機能）\n・オールリセット  この端末の全てのデータを削除します。' },
   { t: 'バックアップのお願い', ic: '☰', b: '記録は、このスマホの中だけに保存されます。\n\n機種変更や、アプリを削除する前には、設定の「バックアップ」で[[sv]]をしてください。保存したデータを戻すときは[[rc]]をタップしてください。' }
 ];
 const GUIDE_ICONS = {
@@ -1968,14 +1969,27 @@ const GUIDE_ICONS = {
   st: '<span style="display:inline-block;padding:.05em .45em;font-size:.75em;font-weight:600;border-radius:8px;background:var(--accent);color:#08202f;text-indent:0;vertical-align:.05em;">START</span>',
   sv: '<span style="display:inline-block;padding:.2em .9em;font-size:.85em;font-weight:800;border-radius:8px;background:var(--card2);color:var(--text-card);border:1px solid var(--border);text-indent:0;vertical-align:.05em;">保存</span>',
   rc: '<span style="display:inline-block;padding:.2em .9em;font-size:.85em;font-weight:800;border-radius:8px;background:var(--card2);color:var(--text-card);border:1px solid var(--border);text-indent:0;vertical-align:.05em;">復元</span>',
+  gb: '<span style="display:inline-block;padding:0 .4em;border-radius:999px;font-size:.68em;font-weight:800;border:1px solid var(--accent);background:var(--card2);color:var(--accent);text-indent:0;vertical-align:.1em;">ⓘ ガイド</span>',
   p: '<span style="display:inline-block;width:1.3em;height:1.3em;font-size:.85em;border-radius:50%;background:linear-gradient(#3a2a00,#3a2a00) center/52% 11% no-repeat,linear-gradient(#3a2a00,#3a2a00) center/11% 52% no-repeat,#ffe14d;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:-.22em;"></span>',
   m: '<span style="display:inline-block;width:1.3em;height:1.3em;font-size:.85em;border-radius:50%;background:linear-gradient(#3a2a00,#3a2a00) center/52% 11% no-repeat,#ffe14d;box-shadow:0 2px 6px rgba(255,225,77,.35);vertical-align:-.22em;"></span>',
 };
 function guideHtml(text){
   const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-  const h = esc.replace(/\[\[(b|r|bs|rs|p|m|big|rst|mp|hd|td|st|sv|rc)\]\]/g, (_, k)=> GUIDE_ICONS[k]);
+  const h = esc.replace(/\[\[(b|r|bs|rs|p|m|big|rst|mp|hd|td|st|sv|rc|gb)\]\]/g, (_, k)=> GUIDE_ICONS[k]);
   let out = '', prevDiv = false, prevBlankAfterText = false;
+  let grp = null;
   h.split('\n').forEach((ln, i)=>{
+    if(ln === '@@GROUP'){ grp = []; return; }
+    if(grp && ln.startsWith('@@END')){
+      const note = ln.replace('@@END', '').trim();
+      out += '<div style="display:flex;align-items:stretch;gap:0;text-indent:0;margin:.2em 0;"><div style="flex:none;">' + grp.join('') + '</div><div style="width:.6em;flex:none;margin:.45em .5em .45em -.15em;border:1.5px solid var(--text-card);border-left:none;border-radius:0 3px 3px 0;"></div><div style="display:flex;align-items:center;flex:1;min-width:0;">' + note + '</div></div>';
+      grp = null; prevDiv = true; prevBlankAfterText = false;
+      return;
+    }
+    if(grp && ln.startsWith('・')){
+      grp.push('<div style="padding-left:1em;text-indent:-1em;">' + ln + '</div>');
+      return;
+    }
     if(ln.startsWith('・')){
       out += '<div style="padding-left:1em;text-indent:-1em;' + (prevBlankAfterText ? 'margin-top:1.75em;' : '') + '">' + ln + '</div>';
       prevDiv = true;
