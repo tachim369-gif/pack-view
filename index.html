@@ -463,18 +463,14 @@
         </div>
       </div>
       <div class="card">
-        <div class="section-title" style="margin:0 0 10px">テーマ</div>
+        <div class="section-title" style="margin:0 0 10px">カラーテーマ</div>
         <div id="themeLocked" class="check-line" style="display:none;">プレミアム機能を解放すると選べるようになります。</div>
         <div class="theme-swatches" id="themeSwatches"></div>
       </div>
       <div class="card">
-        <div class="section-title" style="margin:0 0 6px">データ</div>
-        <div class="check-line">データはこの端末のブラウザ内に保存されます。</div>
-      </div>
-      <div class="card">
         <div class="section-title" style="margin:0 0 6px">オールリセット</div>
-        <div class="check-line">この端末のブラウザ内の全てのデータが削除されます。</div>
-        <button id="allResetBtn" class="action-btn reset" style="margin-top:12px;width:100%;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid #5a2a33;background:var(--card2);color:var(--danger);">全データを削除する</button>
+        <div class="check-line">データはこの端末のブラウザ内に保存されています。オールリセットを実行するとブラウザ内のすべてのデータが削除され、アプリが初期状態に戻ります。実行前にバックアップを取ってください。</div>
+        <button id="allResetBtn" class="action-btn reset" style="margin-top:12px;width:100%;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid #5a2a33;background:var(--card2);color:var(--danger);">オールリセット</button>
       </div>
       <div class="card">
         <div class="section-title" style="margin:0 0 6px">バックアップ</div>
@@ -1827,7 +1823,7 @@ document.getElementById('goalInc').addEventListener('click', ()=>{
 document.getElementById('allResetBtn').addEventListener('click', ()=>{
   const ok1 = confirm('本当によろしいですか？必要に応じバックアップを行なってください。');
   if(!ok1) return;
-  const ok2 = confirm('もう一度確認します。全データ削除を実行しますか？この操作は元に戻せません。');
+  const ok2 = confirm('もう一度確認します。オールリセットを実行しますか？この操作は元に戻せません。');
   if(!ok2) return;
   localStorage.removeItem(STORAGE_KEY);
   data = { packSize: 20, days: {}, activePackSize: null, activePackTaps: 0, dailyGoal: 20, dayStartHour: 0, pricePerPack: 0, theme: 'dark' };
@@ -1953,7 +1949,7 @@ const INTRO_PAGES = [
   { t: 'カレンダー', ic: '▦', b: 'カレンダーでは今月の喫煙状況、月間記録、喫煙本数グラフなどを確認することができます。\n\n・日付には該当日の喫煙本数が表示されます。目標本数を超過した日は赤で表示されます。\n・日付をタップすると該当日の喫煙本数とメモを編集できます。（本日以降はメモのみ編集できます）\n・カレンダーをスワイプすると表示月が変わります。[[td]]で今月が表示されます。' },
   { t: '統計（プレミアム機能）', ic: 'Σ', b: '統計ではサマリー、週間・月間の喫煙本数グラフ（スクロールすると過去データも確認できます）、記録などを確認することができます。' },
   { t: 'メモ', ic: '✎', b: 'メモはカレンダーメモとプライベートメモをタップで切替えて使用できます。\n\n・カレンダーメモ  カレンダーの各日付メモの一覧です。タップすると編集、削除できます。\n・プライベートメモ  [[mp]]で新規書込みできます。[[hd]]をドラッグすると並べ替えできます。' },
-  { t: '設定', ic: '☰', b: '設定にはPack Viewを快適に使用していただくための様々な機能があります。\n\n・Pack Viewガイド  アプリの使い方、機能を説明しています。[[gb]]ボタンでページが開きます。\n@@GROUP\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n@@END アプリの条件設定ができます。\n・プレミアム機能  ライセンスキーを入力すると、カラーテーマと統計が使えるようになります。\n・テーマ  画面の配色を変更できます。（プレミアム機能）\n・オールリセット  この端末の全てのデータを削除します。' },
+  { t: '設定', ic: '☰', b: '設定にはPack Viewを快適に使用していただくための様々な機能があります。\n\n・Pack Viewガイド  アプリの使い方、機能を説明しています。[[gb]]ボタンでページが開きます。\n@@GROUP\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n@@END アプリの条件設定ができます。\n・プレミアム機能  ライセンスキーを入力すると、カラーテーマと統計が使えるようになります。\n・カラーテーマ（プレミアム機能）  画面の配色を変更できます。\n・オールリセット  アプリのデータ削除について説明しています。' },
   { t: 'バックアップのお願い', ic: '☰', b: '記録は、このスマホの中だけに保存されます。\n\n機種変更や、アプリを削除する前には、設定の「バックアップ」で[[sv]]をしてください。保存したデータを戻すときは[[rc]]をタップしてください。' }
 ];
 const GUIDE_ICONS = {
