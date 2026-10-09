@@ -266,8 +266,6 @@
   }
   nav button .ic{font-size:20px;}
   nav button.active{color:var(--accent);}
-  nav button.guide-slot{visibility:hidden;}
-  nav button.guide-slot.show{visibility:visible;}
 
   .modal-bg{
     position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;
@@ -403,12 +401,6 @@
 
     <!-- SETTINGS -->
     <section class="view" id="view-settings">
-      <div class="card" style="padding-top:14px;padding-bottom:14px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div class="section-title" style="margin:0;">Pack View ガイド</div>
-          <button id="introReopenBtn" style="padding:7px 16px;border-radius:999px;font-size:13px;font-weight:800;border:1px solid var(--accent);background:var(--card2);color:var(--accent);cursor:pointer;">ⓘ ガイド</button>
-        </div>
-      </div>
       <div class="card">
         <div class="field">
           <label>1日の開始時間</label>
@@ -482,16 +474,13 @@
         </div>
         <input type="file" id="backupImportInput" accept="application/json,.json" style="display:none;">
       </div>
-      <button type="button" class="brand-logo" id="brandLogoBtn" aria-label="T-SEARCH"><span class="bl-t">T</span><span class="bl-s">-SEARCH</span></button>
     </section>
 
     <!-- GUIDE -->
     <section class="view" id="view-guide">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 10px;">
-        <div class="section-title" style="margin:0;font-size:16px;">Pack View ガイド</div>
-        <button id="guideCloseBtn" aria-label="ガイドを閉じる" style="width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-card);font-size:16px;cursor:pointer;">✕</button>
-      </div>
+      <div class="section-title" style="margin:0 0 10px;font-size:16px;">Pack View ガイド</div>
       <div id="guideList"></div>
+      <button type="button" class="brand-logo" id="brandLogoBtn" aria-label="T-SEARCH"><span class="bl-t">T</span><span class="bl-s">-SEARCH</span></button>
     </section>
   </main>
 
@@ -502,7 +491,7 @@
       <button class="navbtn" data-view="stats"><span class="ic">Σ</span>統計</button>
       <button class="navbtn" data-view="memo"><span class="ic">✎</span>メモ</button>
       <button class="navbtn" data-view="settings"><span class="ic">☰</span>設定</button>
-      <button class="navbtn guide-slot" id="guideTabBtn" data-view="guide"><span class="ic">ⓘ</span>ガイド</button>
+      <button class="navbtn" data-view="guide"><span class="ic">ⓘ</span>ガイド</button>
     </div>
   </nav>
 </div>
@@ -1905,12 +1894,11 @@ document.getElementById('backupImportInput').addEventListener('change', (e)=>{
 });
 
 /* ---------- NAV ---------- */
-const VIEW_ORDER = ['home', 'cal', 'stats', 'memo', 'settings'];
+const VIEW_ORDER = ['home', 'cal', 'stats', 'memo', 'settings', 'guide'];
 function switchView(view){
   const prevGuide = document.getElementById('view-guide').classList.contains('active');
   if(prevGuide) guideScroll = currentScrollTop(); // ガイドを離れるときだけ位置を覚える
   const tab = view;
-  if(view === 'guide') document.getElementById('guideTabBtn').classList.add('show'); // ガイドを開いたら、設定の隣にボタンが現れる
   document.querySelectorAll('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.view === tab));
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+view).classList.add('active');
@@ -1949,7 +1937,7 @@ const INTRO_PAGES = [
   { t: 'カレンダー', ic: '▦', b: 'カレンダーでは今月の喫煙状況、月間記録、喫煙本数グラフなどを確認することができます。\n\n・日付には該当日の喫煙本数が表示されます。目標本数を超過した日は赤で表示されます。\n・日付をタップすると該当日の喫煙本数とメモを編集できます。（本日以降はメモのみ編集できます）\n・カレンダーをスワイプすると表示月が変わります。[[td]]で今月が表示されます。' },
   { t: '統計（プレミアム機能）', ic: 'Σ', b: '統計ではサマリー、週間・月間の喫煙本数グラフ（スクロールすると過去データも確認できます）、記録などを確認することができます。' },
   { t: 'メモ', ic: '✎', b: 'メモはカレンダーメモとプライベートメモをタップで切替えて使用できます。\n\n・カレンダーメモ  カレンダーの各日付メモの一覧です。タップすると編集、削除できます。\n・プライベートメモ  [[mp]]で新規書込みできます。[[hd]]をドラッグすると並べ替えできます。' },
-  { t: '設定', ic: '☰', b: '設定にはPack Viewを快適に使用していただくための様々な機能があります。\n\n・Pack Viewガイド  アプリの使い方、機能を説明しています。[[gb]]ボタンでページが開きます。\n@@GROUP\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n@@END アプリの条件設定ができます。\n・プレミアム機能  ライセンスキーを入力すると、カラーテーマと統計が使えるようになります。\n・カラーテーマ（プレミアム機能）  画面の配色を変更できます。\n・オールリセット  アプリデータの取り扱いについて説明しています。\n・バックアップ  アプリデータのバックアップについて説明しています。' },
+  { t: '設定', ic: '☰', b: '設定にはPack Viewを快適に使用していただくための様々な機能があります。\n\n@@GROUP\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n@@END アプリの条件設定ができます。\n・プレミアム機能  ライセンスキーを入力すると、カラーテーマと統計が使えるようになります。\n・カラーテーマ（プレミアム機能）  画面の配色を変更できます。\n・オールリセット  アプリデータの取り扱いについて説明しています。\n・バックアップ  アプリデータのバックアップについて説明しています。' },
   { t: 'バックアップのお願い', nonum: true, warn: 'バックアップ', ic: '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-.15em;color:var(--ok);filter:drop-shadow(0 0 4px var(--ok));"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4.5"/></svg>', b: 'バックアップはあなたのデータを守ります。\n・機種変更\n・アプリの削除\n・オールリセット\nなどに影響を受けません。アプリ上でデータは復元されます。' }
 ];
 const GUIDE_ICONS = {
@@ -1973,12 +1961,12 @@ function guideHtml(text){
   const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const h = esc.replace(/\[\[(b|r|bs|rs|p|m|big|rst|mp|hd|td|st|sv|rc|gb)\]\]/g, (_, k)=> GUIDE_ICONS[k]);
   let out = '', prevDiv = false, prevBlankAfterText = false;
-  let grp = null;
+  let grp = null, grpGap = false;
   h.split('\n').forEach((ln, i)=>{
-    if(ln === '@@GROUP'){ grp = []; return; }
+    if(ln === '@@GROUP'){ grp = []; grpGap = prevBlankAfterText; return; }
     if(grp && ln.startsWith('@@END')){
       const note = ln.replace('@@END', '').trim();
-      out += '<div style="display:flex;align-items:stretch;gap:0;text-indent:0;margin:.2em 0;"><div style="flex:none;">' + grp.join('') + '</div><div style="width:.6em;flex:none;margin:.45em .5em .45em -.15em;border:1.5px solid var(--text-card);border-left:none;border-radius:0 3px 3px 0;"></div><div style="display:flex;align-items:center;flex:1;min-width:0;">' + note + '</div></div>';
+      out += '<div style="display:flex;align-items:stretch;gap:0;text-indent:0;margin:' + (grpGap ? '1.75em' : '.2em') + ' 0 .2em;"><div style="flex:none;">' + grp.join('') + '</div><div style="width:.6em;flex:none;margin:.45em .5em .45em -.15em;border:1.5px solid var(--text-card);border-left:none;border-radius:0 3px 3px 0;"></div><div style="display:flex;align-items:center;flex:1;min-width:0;">' + note + '</div></div>';
       grp = null; prevDiv = true; prevBlankAfterText = false;
       return;
     }
@@ -2011,11 +1999,6 @@ function currentScrollTop(){
   return Math.max(m ? m.scrollTop : 0, document.body.scrollTop || 0, document.documentElement.scrollTop || 0, window.scrollY || 0);
 }
 function openIntro(){ switchView('guide'); }
-document.getElementById('introReopenBtn').addEventListener('click', openIntro);
-document.getElementById('guideCloseBtn').addEventListener('click', ()=>{
-  document.getElementById('guideTabBtn').classList.remove('show'); // ガイドを閉じたら、設定の隣のボタンも消える
-  switchView('settings');
-});
 
 function maybeShowIntro(){
   if(data.introDone) return false;
