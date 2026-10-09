@@ -2039,7 +2039,7 @@ function guideHtml(text){
 function renderGuide(){
   const el = document.getElementById('guideList');
   if(el.dataset.ready) return;
-  el.innerHTML = INTRO_PAGES.map((p, n)=>`<div class="card"><div class="section-title" style="margin:0 0 8px">${p.nonum ? '' : (n+1) + '. '}${p.ic ? '<span style="color:var(--accent);text-shadow:0 0 8px var(--accent);">' + p.ic + '</span> ' : ''}${p.warn ? '<span style="color:var(--ok);">' + p.t + '</span>' : p.t}</div><div class="intro-body" style="margin-bottom:0;">${guideHtml(p.b)}</div></div>`).join('');
+  el.innerHTML = INTRO_PAGES.map((p, n)=>`<div class="card"${p.warn ? ' style="border:1px solid var(--ok);"' : ''}><div class="section-title" style="margin:0 0 8px">${p.nonum ? '' : (n+1) + '. '}${p.ic ? '<span style="color:var(--accent);text-shadow:0 0 8px var(--accent);">' + p.ic + '</span> ' : ''}${p.warn ? '<span style="color:var(--ok);">' + p.t + '</span>' : p.t}</div><div class="intro-body" style="margin-bottom:0;">${guideHtml(p.b)}</div></div>`).join('');
   el.dataset.ready = '1';
 }
 let guideScroll = 0;
