@@ -91,6 +91,8 @@
   .count-big{font-size:64px;font-weight:800;letter-spacing:-.02em;}
   .count-sub{color:var(--sub);font-size:13px;margin-top:-4px;}
   .last-touch-card{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 20px;}
+  #lastTapHist{scrollbar-width:none;-ms-overflow-style:none;}
+  #lastTapHist::-webkit-scrollbar{display:none;}
   .last-touch-card.open{border-top-color:transparent;border-top-left-radius:0;border-top-right-radius:0;}
   .last-touch-label{position:absolute;left:20px;color:var(--danger);font-size:18px;letter-spacing:.04em;text-transform:lowercase;}
   .last-touch-time{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
@@ -1911,32 +1913,43 @@ function closeLastTapHistory(){
 function toggleLastTapHistory(){
   const card = document.getElementById('lastTouchCard');
   if(card.classList.contains('open')){ closeLastTapHistory(); return; }
-  const keys = Object.keys(data.days).sort().reverse();
-  let taps = [];
-  for(const k of keys){
+  // 前々日の「最後のタップ」から今日までのタップを、古い順に並べる
+  const d2 = effectiveNow(); d2.setDate(d2.getDate() - 2);
+  const k2 = dateKey(d2);
+  let taps = [], dayOf = [];
+  Object.keys(data.days).sort().forEach(k=>{
     const arr = (data.days[k] && data.days[k].taps) || [];
-    for(let i = arr.length - 1; i >= 0; i--){
-      taps.push(arr[i]);
-      if(taps.length >= 10) break;
-    }
-    if(taps.length >= 10) break;
-  }
-  taps.reverse(); // 古い順
+    if(k === k2){ if(arr.length){ taps.push(arr[arr.length - 1]); dayOf.push(k); } }
+    else if(k > k2){ arr.forEach(t => { taps.push(t); dayOf.push(k); }); }
+  });
   const cur = getLastTouchISO(ensureToday(), todayKey());
   const hm = (iso)=>{ const t = new Date(iso); return `${pad(t.getHours())}:${pad(t.getMinutes())}`; };
   // 現在のlast tap(パネル本体)と同じ時刻の最後の1件は、パネル自身が表示するので除く
-  if(cur && taps.length && hm(taps[taps.length - 1]) === hm(cur)) taps.pop();
-  taps = taps.slice(-9);
+  if(cur && taps.length && hm(taps[taps.length - 1]) === hm(cur)){ taps.pop(); dayOf.pop(); }
   if(!taps.length) return; // 履歴がなければ何も広げない
+  // 各行 = そのタップの時刻 + 次のタップまでに経過した時間(=その時点でストップウォッチが止まった値)
   const next = (i)=> i + 1 < taps.length ? taps[i + 1] : cur;
   const h = document.getElementById('lastTapHist');
-  h.innerHTML = taps.map((iso, i)=>{
+  const rows = taps.map((iso, i)=>{
     const n = next(i);
     const gap = n ? fmtHMS(new Date(n) - new Date(iso)) : '';
-    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:30px;"><span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">${hm(iso)}</span><span style="position:absolute;right:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);">${gap}</span></div>`;
+    // 日付が変わる行にだけ、時刻の左に日付を入れる(時刻と同じ文字)
+    let dateLabel = '';
+    if(i > 0 && dayOf[i] !== dayOf[i - 1]){
+      const p = dayOf[i].split('-').map(Number);
+      dateLabel = `<span style="position:absolute;left:0;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">${p[1]}/${p[2]}</span>`;
+    }
+    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:30px;flex:none;">${dateLabel}<span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">${hm(iso)}</span><span style="position:absolute;right:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);">${gap}</span></div>`;
   }).join('');
+  // 高さはカウンターパネルを隠す大きさ。履歴が少ないときは下に寄せ、多いときはスクロール
+  const counterCard = document.querySelector('.tap-card');
+  h.style.height = (counterCard ? counterCard.offsetHeight + 14 : 281) + 'px';
+  h.style.overflowY = 'auto';
+  h.style.boxSizing = 'border-box';
+  h.innerHTML = '<div style="min-height:100%;display:flex;flex-direction:column;justify-content:flex-end;">' + rows + '</div>';
   h.style.display = 'block';
   card.classList.add('open');
+  h.scrollTop = h.scrollHeight; // 一番新しい行が見える位置から
 }
 document.getElementById('lastTouchCard').addEventListener('click', toggleLastTapHistory);
 
@@ -1982,7 +1995,7 @@ setInterval(updateHeaderClock, 1000);
 const INTRO_PAGES = [
   { t: 'ようこそ', b: 'Pack View は Pack（タバコパック）とView（見る）をコンセプトに、パック内の残り本数を確認しながら 喫煙本数を記録するアプリです。' },
   { t: '最初の設定', b: '① 設定で以下の4項目を入力してください。\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n\n② ホームの[[rst]]をタップ、「本日の喫煙本数」と「パック内残数」を入力し[[st]]をタップしてください。' },
-  { t: 'ホーム', ic: '●', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last tapパネルの順に並んでいます。\n\n① パックパネル\n・[[b]]  パック内残数のイメージ表示\n・[[r]]  パック内喫煙本数のイメージ表示\n・[[rs]]  パック内喫煙本数\n・[[bs]]  パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます。\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます。\n\n② カウンターパネル\n・[[big]]  タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]]  本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last tapパネル\n・時刻  基本的には[[big]]を最後にタップした時刻です。[[p]][[m]][[rst]]の操作でも更新されます。\n・経過時間  その時刻からの経過時間です。\n・履歴  タップすると過去10件の履歴が表示され、再タップで元に戻ります。' },
+  { t: 'ホーム', ic: '●', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last tapパネルの順に並んでいます。\n\n① パックパネル\n・[[b]]  パック内残数のイメージ表示\n・[[r]]  パック内喫煙本数のイメージ表示\n・[[rs]]  パック内喫煙本数\n・[[bs]]  パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます。\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます。\n\n② カウンターパネル\n・[[big]]  タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]]  本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last tapパネル\n・時刻  基本的には[[big]]を最後にタップした時刻です。[[p]][[m]][[rst]]の操作でも更新されます。\n・経過時間  その時刻からの経過時間です。\n・履歴  タップすると前日からの履歴が表示され、再タップで元に戻ります。' },
   { t: 'カレンダー', ic: '▦', b: 'カレンダーでは今月の喫煙状況、月間記録、喫煙本数グラフなどを確認することができます。\n\n・日付には該当日の喫煙本数が表示されます。目標本数を超過した日は赤で表示されます。\n・日付をタップすると該当日の喫煙本数とメモを編集できます。（本日以降はメモのみ編集できます）\n・カレンダーをスワイプすると表示月が変わります。[[td]]で今月が表示されます。' },
   { t: '統計（プレミアム機能）', ic: 'Σ', b: '統計ではサマリー、週間・月間の喫煙本数グラフ（スクロールすると過去データも確認できます）、記録などを確認することができます。' },
   { t: 'メモ', ic: '✎', b: 'メモはカレンダーメモとプライベートメモをタップで切替えて使用できます。\n\n・カレンダーメモ  カレンダーの各日付メモの一覧です。タップすると編集、削除できます。\n・プライベートメモ  [[mp]]で新規書込みできます。[[hd]]をドラッグすると並べ替えできます。' },
