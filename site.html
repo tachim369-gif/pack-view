@@ -91,6 +91,7 @@
   .count-big{font-size:64px;font-weight:800;letter-spacing:-.02em;}
   .count-sub{color:var(--sub);font-size:13px;margin-top:-4px;}
   .last-touch-card{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 20px;}
+  .last-touch-card.open{border-top-color:transparent;border-top-left-radius:0;border-top-right-radius:0;}
   .last-touch-label{position:absolute;left:20px;color:var(--danger);font-size:18px;letter-spacing:.04em;text-transform:lowercase;}
   .last-touch-time{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;}
   .brand-logo{background:none;border-top:0;border-left:0;border-right:0;cursor:pointer;-webkit-tap-highlight-color:transparent;display:flex;align-items:baseline;justify-content:center;width:fit-content;margin:38px auto 8px;padding:0 2px 4px;border-bottom:1px solid var(--border);font-family:Arial,Helvetica,sans-serif;font-weight:700;line-height:1;}
@@ -333,7 +334,8 @@
         </div>
       </div>
 
-      <div class="card last-touch-card">
+      <div class="card last-touch-card" id="lastTouchCard" style="cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        <div id="lastTapHist" style="display:none;position:absolute;left:-1px;right:-1px;bottom:100%;z-index:5;background:var(--card);border:1px solid var(--border);border-bottom:none;border-radius:18px 18px 0 0;padding:8px 20px 2px;"></div>
         <div class="last-touch-label">last tap</div>
         <div class="last-touch-time" id="lastTouchTime">－－:－－</div>
         <div class="last-touch-sw" id="lastTouchStopwatch">00:00:00</div>
@@ -1893,9 +1895,55 @@ document.getElementById('backupImportInput').addEventListener('change', (e)=>{
   reader.readAsText(file);
 });
 
+
+/* ---------- last tap history (おまけ) ---------- */
+function fmtGap(ms){
+  const m = Math.floor(ms / 60000);
+  if(m < 60) return m + '分';
+  return Math.floor(m / 60) + '時間' + (m % 60) + '分';
+}
+function closeLastTapHistory(){
+  const h = document.getElementById('lastTapHist');
+  if(h) h.style.display = 'none';
+  const c = document.getElementById('lastTouchCard');
+  if(c) c.classList.remove('open');
+}
+function toggleLastTapHistory(){
+  const card = document.getElementById('lastTouchCard');
+  if(card.classList.contains('open')){ closeLastTapHistory(); return; }
+  const keys = Object.keys(data.days).sort().reverse();
+  let taps = [];
+  for(const k of keys){
+    const arr = (data.days[k] && data.days[k].taps) || [];
+    for(let i = arr.length - 1; i >= 0; i--){
+      taps.push(arr[i]);
+      if(taps.length >= 10) break;
+    }
+    if(taps.length >= 10) break;
+  }
+  taps.reverse(); // 古い順
+  const cur = getLastTouchISO(ensureToday(), todayKey());
+  const hm = (iso)=>{ const t = new Date(iso); return `${pad(t.getHours())}:${pad(t.getMinutes())}`; };
+  // 現在のlast tap(パネル本体)と同じ時刻の最後の1件は、パネル自身が表示するので除く
+  if(cur && taps.length && hm(taps[taps.length - 1]) === hm(cur)) taps.pop();
+  taps = taps.slice(-9);
+  if(!taps.length) return; // 履歴がなければ何も広げない
+  const next = (i)=> i + 1 < taps.length ? taps[i + 1] : cur;
+  const h = document.getElementById('lastTapHist');
+  h.innerHTML = taps.map((iso, i)=>{
+    const n = next(i);
+    const gap = n ? fmtHMS(new Date(n) - new Date(iso)) : '';
+    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:30px;"><span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">${hm(iso)}</span><span style="position:absolute;right:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);">${gap}</span></div>`;
+  }).join('');
+  h.style.display = 'block';
+  card.classList.add('open');
+}
+document.getElementById('lastTouchCard').addEventListener('click', toggleLastTapHistory);
+
 /* ---------- NAV ---------- */
 const VIEW_ORDER = ['home', 'cal', 'stats', 'memo', 'settings', 'guide'];
 function switchView(view){
+  closeLastTapHistory();
   const prevGuide = document.getElementById('view-guide').classList.contains('active');
   if(prevGuide) guideScroll = currentScrollTop(); // ガイドを離れるときだけ位置を覚える
   const tab = view;
@@ -1933,7 +1981,7 @@ setInterval(updateHeaderClock, 1000);
 const INTRO_PAGES = [
   { t: 'ようこそ', b: 'Pack View は Pack（タバコパック）とView（見る）をコンセプトに、パック内の残り本数を確認しながら 喫煙本数を記録するアプリです。' },
   { t: '最初の設定', b: '① 設定で以下の4項目を入力してください。\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n\n② ホームの[[rst]]をタップ、「本日の喫煙本数」と「パック内残数」を入力し[[st]]をタップしてください。' },
-  { t: 'ホーム', ic: '●', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last tapパネルの順に並んでいます。\n\n① パックパネル\n・[[b]]  パック内残数のイメージ表示\n・[[r]]  パック内喫煙本数のイメージ表示\n・[[rs]]  パック内喫煙本数\n・[[bs]]  パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます。\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます。\n\n② カウンターパネル\n・[[big]]  タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]]  本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last tapパネル\n・時刻  基本的には[[big]]を最後にタップした時刻です。[[p]][[m]][[rst]]の操作でも更新されます。\n・経過時間  その時刻からの経過時間です。' },
+  { t: 'ホーム', ic: '●', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last tapパネルの順に並んでいます。\n\n① パックパネル\n・[[b]]  パック内残数のイメージ表示\n・[[r]]  パック内喫煙本数のイメージ表示\n・[[rs]]  パック内喫煙本数\n・[[bs]]  パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます。\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます。\n\n② カウンターパネル\n・[[big]]  タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]]  本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last tapパネル\n・時刻  基本的には[[big]]を最後にタップした時刻です。[[p]][[m]][[rst]]の操作でも更新されます。\n・経過時間  その時刻からの経過時間です。\n・履歴  タップすると過去10件の履歴が表示され、再タップで元に戻ります。' },
   { t: 'カレンダー', ic: '▦', b: 'カレンダーでは今月の喫煙状況、月間記録、喫煙本数グラフなどを確認することができます。\n\n・日付には該当日の喫煙本数が表示されます。目標本数を超過した日は赤で表示されます。\n・日付をタップすると該当日の喫煙本数とメモを編集できます。（本日以降はメモのみ編集できます）\n・カレンダーをスワイプすると表示月が変わります。[[td]]で今月が表示されます。' },
   { t: '統計（プレミアム機能）', ic: 'Σ', b: '統計ではサマリー、週間・月間の喫煙本数グラフ（スクロールすると過去データも確認できます）、記録などを確認することができます。' },
   { t: 'メモ', ic: '✎', b: 'メモはカレンダーメモとプライベートメモをタップで切替えて使用できます。\n\n・カレンダーメモ  カレンダーの各日付メモの一覧です。タップすると編集、削除できます。\n・プライベートメモ  [[mp]]で新規書込みできます。[[hd]]をドラッグすると並べ替えできます。' },
