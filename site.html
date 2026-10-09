@@ -1973,11 +1973,21 @@ function buildReminderIcs(hhmm){
     'END:VEVENT','END:VCALENDAR'
   ].join('\r\n') + '\r\n';
 }
-document.getElementById('reminderAddBtn').addEventListener('click', ()=>{
+document.getElementById('reminderAddBtn').addEventListener('click', async ()=>{
   if(!data.premium) return;
   const t = document.getElementById('reminderTime').value || '09:00';
   const ics = buildReminderIcs(t);
-  // iOSのSafariは data: URI の text/calendar を開くと「カレンダーに追加」画面を出す
+  // 1) 共有メニュー(Share Sheet)から「カレンダー」へ渡す。ホーム画面のPWAでも使える
+  try{
+    const file = new File([ics], 'PackView-reminder.ics', { type: 'text/calendar' });
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], title: 'Pack View リマインダー' });
+      return;
+    }
+  }catch(err){
+    if(err && err.name === 'AbortError') return; // ユーザーが共有メニューを閉じただけ
+  }
+  // 2) 共有メニューが使えない環境の予備(Safariなど)
   window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
 });
 
