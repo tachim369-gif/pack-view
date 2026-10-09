@@ -1946,7 +1946,9 @@ function toggleLastTapHistory(){
       const p = dayOf[i].split('-').map(Number);
       dateLabel = `<span style="position:absolute;left:0;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">${p[1]}/${p[2]}</span>`;
     }
-    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:30px;flex:none;">${dateLabel}<span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">${hm(iso)}</span><span style="position:absolute;right:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent);">${gap}</span></div>`;
+    // 同じ日に同じ時刻(時:分)の行が後ろにもあるときは、最後の1行以外をグレーにする
+    const dup = taps.some((t2, j)=> j > i && dayOf[j] === dayOf[i] && hm(t2) === hm(iso));
+    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:30px;flex:none;">${dateLabel}<span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;${dup ? 'color:var(--sub);opacity:.45;' : ''}">${hm(iso)}</span><span style="position:absolute;right:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:${dup ? 'var(--sub);opacity:.45' : 'var(--accent)'};">${gap}</span></div>`;
   }).join('');
   // 高さはカウンターパネルを隠す大きさ。履歴が少ないときは下に寄せ、多いときはスクロール
   const counterCard = document.querySelector('.tap-card');
