@@ -462,6 +462,17 @@
         <div class="theme-swatches" id="themeSwatches"></div>
       </div>
       <div class="card">
+        <div class="section-title" style="margin:0 0 6px">リマインダー</div>
+        <div id="reminderLocked" class="check-line" style="display:none;">プレミアム機能を解放すると使えるようになります。</div>
+        <div id="reminderBody">
+          <div class="check-line">毎日この時刻に、パックの残数を合わせる通知をiPhoneのカレンダーに追加します。</div>
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+            <input type="time" id="reminderTime" value="09:00" style="flex:none;width:130px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-card);font-size:16px;">
+            <button id="reminderAddBtn" style="flex:1;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">カレンダーに追加</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
         <div class="section-title" style="margin:0 0 6px">オールリセット</div>
         <div class="check-line">データはこの端末のブラウザ内に保存されています。オールリセットを実行するとブラウザ内のすべてのデータが削除され、アプリが初期状態に戻ります。実行前にバックアップを取ってください。</div>
         <button id="allResetBtn" class="action-btn reset" style="margin-top:12px;width:100%;padding:12px 0;border-radius:12px;font-size:13px;font-weight:800;letter-spacing:.03em;border:1px solid var(--border);background:var(--card2);color:var(--text-card);">オールリセット</button>
@@ -1707,6 +1718,8 @@ function renderSettings(){
 
   const swatchWrap = document.getElementById('themeSwatches');
   document.getElementById('themeLocked').style.display = data.premium ? 'none' : '';
+  document.getElementById('reminderLocked').style.display = data.premium ? 'none' : '';
+  document.getElementById('reminderBody').style.display = data.premium ? '' : 'none';
   swatchWrap.style.display = data.premium ? '' : 'none';
   swatchWrap.innerHTML = '';
   if(data.premium){
@@ -1939,6 +1952,34 @@ function toggleLastTapHistory(){
   card.classList.add('open');
 }
 document.getElementById('lastTouchCard').addEventListener('click', toggleLastTapHistory);
+
+
+/* ---------- daily reminder (.ics) ---------- */
+function buildReminderIcs(hhmm){
+  const [hh, mm] = hhmm.split(':').map(Number);
+  const now = new Date();
+  const ymd = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+  const st = `${ymd}T${pad(hh)}${pad(mm)}00`;
+  const en = `${ymd}T${pad(hh)}${pad((mm + 5) % 60)}00`;
+  const enFix = (mm + 5) >= 60 ? `${ymd}T${pad((hh + 1) % 24)}${pad((mm + 5) % 60)}00` : en;
+  const stamp = now.toISOString().replace(/[-:]/g,'').replace(/\.\d+/, '');
+  const text = 'Pack View: パックの残数を合わせる';
+  return [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Pack View//Reminder//JP','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT','UID:packview-daily-reminder-' + hhmm.replace(':','') + '@packview',
+    'DTSTAMP:' + stamp,'DTSTART:' + st,'DTEND:' + enFix,'RRULE:FREQ=DAILY',
+    'SUMMARY:' + text,'DESCRIPTION:実際のパックを見て、残数を合わせてください。',
+    'BEGIN:VALARM','TRIGGER:PT0S','ACTION:DISPLAY','DESCRIPTION:' + text,'END:VALARM',
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n') + '\r\n';
+}
+document.getElementById('reminderAddBtn').addEventListener('click', ()=>{
+  if(!data.premium) return;
+  const t = document.getElementById('reminderTime').value || '09:00';
+  const ics = buildReminderIcs(t);
+  // iOSのSafariは data: URI の text/calendar を開くと「カレンダーに追加」画面を出す
+  window.location.href = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+});
 
 /* ---------- NAV ---------- */
 const VIEW_ORDER = ['home', 'cal', 'stats', 'memo', 'settings', 'guide'];
