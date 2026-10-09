@@ -337,6 +337,7 @@
       </div>
 
       <div class="card last-touch-card" id="lastTouchCard" style="cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        <div id="lastTapPremium" style="display:none;position:absolute;inset:0;z-index:6;background:var(--card);border-radius:18px;align-items:center;justify-content:space-between;padding:0 12px 0 20px;gap:12px;"><span style="font-size:15px;">last tapの履歴はプレミアム機能です。</span><span style="flex:none;font-size:24px;line-height:1;padding:4px 10px;">×</span></div>
         <div id="lastTapHist" style="display:none;position:absolute;left:-1px;right:-1px;bottom:100%;z-index:5;background:var(--card);border:1px solid var(--border);border-bottom:none;border-radius:18px 18px 0 0;padding:8px 20px 2px;"></div>
         <div class="last-touch-label">last tap</div>
         <div class="last-touch-time" id="lastTouchTime">－－:－－</div>
@@ -447,9 +448,9 @@
       </div>
       <div class="card" style="border:1px solid var(--warn);">
         <div class="section-title" style="margin:0 0 10px">プレミアム機能</div>
-        <div id="premiumActive" style="display:none;color:var(--warn);" class="check-line">✓ プレミアム機能が有効です(カラーテーマ・統計タブが使えます)</div>
+        <div id="premiumActive" style="display:none;color:var(--warn);" class="check-line">✓ プレミアム機能が有効です(カラーテーマ・統計タブ・last tapの履歴が使えます)</div>
         <div id="premiumLocked">
-          <div class="check-line">ライセンスキーを入力すると、カラーテーマと統計タブが使えるようになります。</div>
+          <div class="check-line">ライセンスキーを入力すると、カラーテーマ、統計タブ、last tapの履歴が使えるようになります。</div>
           <div style="display:flex;gap:8px;margin-top:10px;">
             <input type="text" id="licenseKeyInput" placeholder="ライセンスキー" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-card);font-size:13px;">
             <button id="licenseVerifyBtn" style="padding:10px 16px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text-card);font-size:13px;font-weight:800;white-space:nowrap;">認証する</button>
@@ -1905,6 +1906,7 @@ function fmtGap(ms){
   return Math.floor(m / 60) + '時間' + (m % 60) + '分';
 }
 function closeLastTapHistory(){
+  const ov = document.getElementById('lastTapPremium'); if(ov) ov.style.display = 'none';
   const h = document.getElementById('lastTapHist');
   if(h) h.style.display = 'none';
   const c = document.getElementById('lastTouchCard');
@@ -1913,6 +1915,11 @@ function closeLastTapHistory(){
 function toggleLastTapHistory(){
   const card = document.getElementById('lastTouchCard');
   if(card.classList.contains('open')){ closeLastTapHistory(); return; }
+  if(!data.premium){ // 履歴はプレミアム機能: パネルに重ねてお知らせ(再タップか×で戻る)
+    const ov = document.getElementById('lastTapPremium');
+    ov.style.display = ov.style.display === 'flex' ? 'none' : 'flex';
+    return;
+  }
   // 前々日の「最後のタップ」から今日までのタップを、古い順に並べる
   const d2 = effectiveNow(); d2.setDate(d2.getDate() - 2);
   const k2 = dateKey(d2);
@@ -1995,11 +2002,11 @@ setInterval(updateHeaderClock, 1000);
 const INTRO_PAGES = [
   { t: 'ようこそ', b: 'Pack View は Pack（タバコパック）とView（見る）をコンセプトに、パック内の残り本数を確認しながら 喫煙本数を記録するアプリです。' },
   { t: '最初の設定', b: '① 設定で以下の4項目を入力してください。\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n\n② ホームの[[rst]]をタップ、「本日の喫煙本数」と「パック内残数」を入力し[[st]]をタップしてください。' },
-  { t: 'ホーム', ic: '●', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last tapパネルの順に並んでいます。\n\n① パックパネル\n・[[b]]  パック内残数のイメージ表示\n・[[r]]  パック内喫煙本数のイメージ表示\n・[[rs]]  パック内喫煙本数\n・[[bs]]  パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます。\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます。\n\n② カウンターパネル\n・[[big]]  タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]]  本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last tapパネル\n・時刻  基本的には[[big]]を最後にタップした時刻です。[[p]][[m]][[rst]]の操作でも更新されます。\n・経過時間  その時刻からの経過時間です。\n・履歴  タップすると前日からの履歴が表示され、再タップで元に戻ります。' },
+  { t: 'ホーム', ic: '●', b: 'ホーム画面は上から、パックパネル、カウンターパネル、last tapパネルの順に並んでいます。\n\n① パックパネル\n・[[b]]  パック内残数のイメージ表示\n・[[r]]  パック内喫煙本数のイメージ表示\n・[[rs]]  パック内喫煙本数\n・[[bs]]  パック内残数\n・[[p]][[m]]  [[bs]] の表示が実際と違っている場合に修正できます。\n・パック内残数が0になると、[[b]] は1パックあたりの本数として表示され、[[rs]] が1つ追加されます。\n\n② カウンターパネル\n・[[big]]  タップすると中央に表示される喫煙本数が加算され、パックパネルの[[b]]が[[r]]に変化します。\n・[[m]]  [[big]]の誤タップを取り消します。\n・[[rst]]  本日の喫煙本数とパック内残数を修正し、パックパネルにも反映されます。\n\n③ last tapパネル\n・時刻  基本的には[[big]]を最後にタップした時刻です。[[p]][[m]][[rst]]の操作でも更新されます。\n・経過時間  その時刻からの経過時間です。\n・履歴（プレミアム機能）  タップすると前日からの履歴が表示され、再タップで元に戻ります。' },
   { t: 'カレンダー', ic: '▦', b: 'カレンダーでは今月の喫煙状況、月間記録、喫煙本数グラフなどを確認することができます。\n\n・日付には該当日の喫煙本数が表示されます。目標本数を超過した日は赤で表示されます。\n・日付をタップすると該当日の喫煙本数とメモを編集できます。（本日以降はメモのみ編集できます）\n・カレンダーをスワイプすると表示月が変わります。[[td]]で今月が表示されます。' },
   { t: '統計（プレミアム機能）', ic: 'Σ', b: '統計ではサマリー、週間・月間の喫煙本数グラフ（スクロールすると過去データも確認できます）、記録などを確認することができます。' },
   { t: 'メモ', ic: '✎', b: 'メモはカレンダーメモとプライベートメモをタップで切替えて使用できます。\n\n・カレンダーメモ  カレンダーの各日付メモの一覧です。タップすると編集、削除できます。\n・プライベートメモ  [[mp]]で新規書込みできます。[[hd]]をドラッグすると並べ替えできます。' },
-  { t: '設定', ic: '☰', b: '設定にはPack Viewを快適に使用していただくための様々な機能があります。\n\n@@GROUP\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n@@END アプリの条件設定ができます。\n・プレミアム機能  ライセンスキーを入力すると、カラーテーマと統計タブが使えるようになります。\n・カラーテーマ（プレミアム機能）  画面の配色を変更できます。\n・オールリセット  アプリデータの取り扱いについて説明しています。\n・バックアップ  アプリデータのバックアップについて説明しています。' },
+  { t: '設定', ic: '☰', b: '設定にはPack Viewを快適に使用していただくための様々な機能があります。\n\n@@GROUP\n・1日の開始時間\n・1パックあたりの本数\n・1パックあたりの価格（円）\n・1日の目標本数\n@@END アプリの条件設定ができます。\n・プレミアム機能  ライセンスキーを入力すると、カラーテーマ、統計タブ、last tapの履歴が使えるようになります。\n・カラーテーマ（プレミアム機能）  画面の配色を変更できます。\n・オールリセット  アプリデータの取り扱いについて説明しています。\n・バックアップ  アプリデータのバックアップについて説明しています。' },
   { t: 'バックアップのお願い', nonum: true, warn: 'バックアップ', ic: '<svg viewBox="0 0 24 24" width="1.05em" height="1.05em" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-.15em;color:var(--ok);filter:drop-shadow(0 0 4px var(--ok));"><circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="4.5"/></svg>', b: 'バックアップはあなたのデータを守ります。\n・機種変更\n・アプリの削除\n・オールリセット\nなどに影響を受けません。アプリ上でデータは復元されます。' }
 ];
 const GUIDE_ICONS = {
