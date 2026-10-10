@@ -1077,7 +1077,7 @@ function renderTrendChart(year, month, daysInMonth){
   chartEl.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:100px;display:block;">${axisLine}${goalLine}${bars}</svg>`;
 }
 
-function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thresholds, goalLineValue, costs, rowLabels, overDays, avgs, monthTargets){
+function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thresholds, goalLineValue, costs, rowLabels, overDays, avgs, monthTargets, crownIdx){
   const fmtV = valueFormatter || (v => v);
   const H = 100, padB = 4, padT = 6;
   const hasOverRow = !!overDays;
@@ -1128,6 +1128,12 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
     } else {
       bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
     }
+    if(crownIdx === i){
+      const ty = Math.max(0, y - 12);
+      bars += `<path d="M0,9 L0,2.5 L3,5.5 L6,0 L9,5.5 L12,2.5 L12,9 Z" transform="translate(${(cx-6).toFixed(1)},${ty.toFixed(1)})" fill="#f5c518" stroke="#c99a00" stroke-width=".6" stroke-linejoin="round"></path>`;
+    }
+    const isCrown = crownIdx === i;
+    const CROWN_C = '#f5c518';
     const valueColor = (t > 0 && v > t) ? 'var(--danger)' : 'var(--text-card)';
     valueEls += `<text x="${cx.toFixed(1)}" y="${valueRowY}" font-size="12" font-weight="600" fill="${valueColor}" text-anchor="middle">${fmtV(v)}</text>`;
     if(overDays && overDays[i] !== undefined && overDays[i] !== null){
@@ -1136,7 +1142,7 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
       valueEls += `<text x="${cx.toFixed(1)}" y="${overRowY}" font-size="12" font-weight="600" text-anchor="middle"><tspan fill="${overNumColor}">${overParts[0]}</tspan><tspan fill="var(--text-card)">/${overParts[1]}</tspan></text>`;
     }
     if(avgs && avgs[i] !== undefined && avgs[i] !== null){
-      valueEls += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">${avgs[i]}</text>`;
+      valueEls += `<text x="${cx.toFixed(1)}" y="${avgRowY}" font-size="12" font-weight="600" fill="${isCrown?CROWN_C:'var(--text-card)'}" text-anchor="middle">${avgs[i]}</text>`;
     }
     if(costs && costs[i] !== undefined){
       valueEls += `<text x="${cx.toFixed(1)}" y="${costRowY}" font-size="12" font-weight="600" fill="var(--text-card)" text-anchor="middle">¥${Math.round(costs[i]).toLocaleString()}</text>`;
@@ -1185,6 +1191,12 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
   }
 }
 
+function pickCrown(list){
+  const c = list.map((p,i) => ({i, a: p.eligible ? parseFloat(p.avg) : null})).filter(x => x.a !== null);
+  if(c.length < 2) return -1;
+  return c.reduce((m,x) => x.a < m.a ? x : m).i;
+}
+
 function renderWeeklyChart(){
   const el = document.getElementById('statsWeekChart');
   const today = effectiveNow();
@@ -1221,7 +1233,9 @@ function renderWeeklyChart(){
       }
     }
     const hasData = recorded > 0;
+    const wEligible = !isFuture && start.getTime() < thisSunday.getTime() && recorded >= 5 && recordedKeys[0] <= dateKey(start);
     allWeeks.push({
+      eligible: wEligible,
       label: `${start.getMonth()+1}/${start.getDate()}-`,
       value: hasData ? total : null,
       cost: hasData ? total * costPerCig : null,
@@ -1237,7 +1251,7 @@ function renderWeeklyChart(){
   const weekAvgs = allWeeks.map(w => w.avg);
   const weekMonthTargets = allWeeks.map(w => w.monthTarget);
   const weekThreshold = goal > 0 ? goal * 7 : 0;
-  drawSimpleBarChart(el, weeks, weekLabels, undefined, undefined, weekThreshold, weekThreshold, costPerCig > 0 ? weekCosts : undefined, { value: '週間合計', cost: '週間支出', period: '期間', overDays: '超過日数', avg: '週間平均' }, goal > 0 ? weekOverDays : undefined, weekAvgs, weekMonthTargets);
+  drawSimpleBarChart(el, weeks, weekLabels, undefined, undefined, weekThreshold, weekThreshold, costPerCig > 0 ? weekCosts : undefined, { value: '週間合計', cost: '週間支出', period: '期間', overDays: '超過日数', avg: '週間平均' }, goal > 0 ? weekOverDays : undefined, weekAvgs, weekMonthTargets, pickCrown(allWeeks));
 }
 
 function renderMonthlyChart(){
@@ -1275,7 +1289,9 @@ function renderMonthlyChart(){
       total = keys.reduce((a,k2) => a + (data.days[k2].count || 0), 0);
       if(goal > 0) over = keys.filter(k2 => data.days[k2].count > goal).length;
     }
+    const mEligible = !isFuture && abs < currentAbs && recorded >= 20 && recordedKeys[0] <= `${prefix}-01`;
     allMonths.push({
+      eligible: mEligible,
       label: `${d.getMonth()+1}月`,
       value: hasData ? total : null,
       threshold: goal > 0 ? goal * daysInMonth : 0,
@@ -1292,7 +1308,7 @@ function renderMonthlyChart(){
   const monthOverDays = allMonths.map(m => m.overDays);
   const monthAvgs = allMonths.map(m => m.avg);
   const monthTargets = allMonths.map(m => m.monthTarget);
-  drawSimpleBarChart(el, months, monthLabels, undefined, undefined, monthThresholds, undefined, costPerCig > 0 ? monthCosts : undefined, { value: '月間合計', cost: '月間支出', period: '期間', overDays: '超過日数', avg: '月間平均' }, goal > 0 ? monthOverDays : undefined, monthAvgs, monthTargets);
+  drawSimpleBarChart(el, months, monthLabels, undefined, undefined, monthThresholds, undefined, costPerCig > 0 ? monthCosts : undefined, { value: '月間合計', cost: '月間支出', period: '期間', overDays: '超過日数', avg: '月間平均' }, goal > 0 ? monthOverDays : undefined, monthAvgs, monthTargets, pickCrown(allMonths));
 }
 
 function computeStreaks(){
