@@ -1193,7 +1193,7 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
 
 function pickCrown(list){
   const c = list.map((p,i) => ({i, a: p.eligible ? parseFloat(p.avg) : null})).filter(x => x.a !== null);
-  if(c.length < 2) return -1;
+  if(c.length < 1) return -1;
   return c.reduce((m,x) => x.a < m.a ? x : m).i;
 }
 
