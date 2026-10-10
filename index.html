@@ -1079,7 +1079,8 @@ function renderTrendChart(year, month, daysInMonth){
 
 function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thresholds, goalLineValue, costs, rowLabels, overDays, avgs, monthTargets, crownIdx){
   const fmtV = valueFormatter || (v => v);
-  const H = 100, padB = 4, padT = 6;
+  const crownSpace = (crownIdx !== undefined && crownIdx >= 0) ? 16 : 0;
+  const H = 100 + crownSpace, padB = 4, padT = 6 + crownSpace;
   const hasOverRow = !!overDays;
   const hasAvgRow = !!avgs;
   const hasCostRow = !!costs;
@@ -1129,8 +1130,9 @@ function drawSimpleBarChart(el, values, labels, valueFormatter, maxOverride, thr
       bars += `<rect class="chart-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="1.5"></rect>`;
     }
     if(crownIdx === i){
-      const ty = h >= 16 ? y + 3 : Math.max(0, y - 12);
-      bars += `<path d="M0,9 L0,2.5 L3,5.5 L6,0 L9,5.5 L12,2.5 L12,9 Z" transform="translate(${(cx-6).toFixed(1)},${ty.toFixed(1)})" fill="#f5c518" stroke="#c99a00" stroke-width=".6" stroke-linejoin="round"></path>`;
+      const cs = 1.5, cw = 12*cs, ch = 9*cs;
+      const ty = 1;
+      bars += `<path d="M0,9 L0,2.5 L3,5.5 L6,0 L9,5.5 L12,2.5 L12,9 Z" transform="translate(${(cx-cw/2).toFixed(1)},${ty.toFixed(1)}) scale(${cs})" fill="#f5c518" stroke="#f5c518" stroke-width=".8" stroke-linejoin="round"></path>`;
     }
     const isCrown = crownIdx === i;
     const CROWN_C = '#f5c518';
