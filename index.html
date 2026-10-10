@@ -1932,7 +1932,8 @@ function toggleLastTapHistory(){
   const cur = getLastTouchISO(ensureToday(), todayKey());
   const hm = (iso)=>{ const t = new Date(iso); return `${pad(t.getHours())}:${pad(t.getMinutes())}`; };
   // 現在のlast tap(パネル本体)と同じ時刻の最後の1件は、パネル自身が表示するので除く
-  if(cur && taps.length && hm(taps[taps.length - 1]) === hm(cur)){ taps.pop(); dayOf.pop(); }
+  let curDay = todayKey();
+  if(cur && taps.length && hm(taps[taps.length - 1]) === hm(cur)){ taps.pop(); curDay = dayOf.pop(); }
   if(!taps.length) return; // 履歴がなければ何も広げない
   // 各行 = そのタップの時刻 + 次のタップまでに経過した時間(=その時点でストップウォッチが止まった値)
   const next = (i)=> i + 1 < taps.length ? taps[i + 1] : cur;
@@ -1947,8 +1948,9 @@ function toggleLastTapHistory(){
       dateLabel = `<span style="position:absolute;left:0;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;">${p[1]}/${p[2]}</span>`;
     }
     // 同じ日に同じ時刻(時:分)の行が後ろにもあるときは、最後の1行以外をグレーにする
-    const dup = taps.some((t2, j)=> j > i && dayOf[j] === dayOf[i] && hm(t2) === hm(iso));
-    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:30px;flex:none;">${dateLabel}<span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;${dup ? 'color:var(--sub);opacity:.45;' : ''}">${hm(iso)}</span><span style="position:absolute;right:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:${dup ? 'var(--sub);opacity:.45' : 'var(--accent)'};">${gap}</span></div>`;
+    const dup = taps.some((t2, j)=> j > i && dayOf[j] === dayOf[i] && hm(t2) === hm(iso)) || (!!cur && dayOf[i] === curDay && hm(iso) === hm(cur));
+    const newest = (i === taps.length - 1 && !dup); // 一番新しい履歴の行(グレーのときは赤にしない)
+    return `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:30px;flex:none;">${dateLabel}<span style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;${dup ? 'color:var(--sub);opacity:.45;' : ''}">${hm(iso)}</span><span style="position:absolute;right:0;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:${dup ? 'var(--sub);opacity:.45' : (newest ? 'var(--danger)' : 'var(--accent)')};">${gap}</span></div>`;
   }).join('');
   // 高さはカウンターパネルを隠す大きさ。履歴が少ないときは下に寄せ、多いときはスクロール
   const counterCard = document.querySelector('.tap-card');
